@@ -1,0 +1,50 @@
+$black-primary: #151414;
+$white-primary: #FEFEFE;
+$gray-primary: #F6F6F6;
+$red-color: #E62720;
+$blue-color: #5BA2FF;
+
+@mixin tag-text {
+  line-height: 120%;
+  font-size: 14px;
+}
+
+@mixin button-text {
+  line-height: 100%;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+@mixin input-text {
+  line-height: 120%;
+  font-size: 16px;
+}
+
+@mixin main-text {
+  line-height: 120%;
+  font-size: 18px;
+}
+
+@mixin h5-text {
+  font-size: 20px;
+  line-height: 100%;
+  font-weight: 400;
+}
+
+@mixin h4-text {
+  font-size: 22px;
+  line-height: 120%;
+  font-weight: 600;
+}
+
+@mixin h2-text {
+  font-size: 28px;
+  line-height: 100%;
+  font-weight: 400;
+}
+
+@mixin h1-text {
+  font-size: 42px;
+  line-height: 100%;
+  font-weight: 400;
+}
