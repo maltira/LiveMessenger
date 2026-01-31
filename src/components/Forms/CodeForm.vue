@@ -1,17 +1,29 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
 import Spinner from '@/components/UI/Spinner.vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
-import router from '@/router'
-import AuthIcon from '@/components/UI/AuthIcon.vue'
 import { useOtpTimer } from '@/composables/useOtpTimer.ts'
+import AuthIcon from '@/components/UI/AuthIcon.vue'
+import { useNotification } from '@/composables/useNotifications.ts'
+
+
+// ? PROPS & EMIT
+interface Props {
+  action: "login" | "register" | "forgot-password"
+}
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  ok: []
+  close: []
+}>()
 
 // ? STORE
-const authStore = useAuthStore()
-const { isLoading, error, email, temp_token } = storeToRefs(authStore)
-const { VerifyOTP, ResendOTP } = authStore
+const { infoNotification } = useNotification()
 const { timeLeft, isActive, start } = useOtpTimer(30)
+const authStore = useAuthStore()
+const { isLoading, error, email, user_id } = storeToRefs(authStore)
+const { VerifyOTP, ResendOTP } = authStore
 
 // ? REF
 const code = ref<Array<string>>(new Array(6).fill(''))
@@ -79,10 +91,10 @@ function handlePaste(e: ClipboardEvent, index: number) {
 
 const goToResend = async () => {
   if (!isActive.value) {
-    await ResendOTP(temp_token.value!.user_id, email.value!)
+    await ResendOTP(user_id.value!, email.value!)
 
     if (error.value) {
-      console.error(error.value.code, error.value.error)
+      infoNotification("🚫 Ошибка. " + error.value)
       return
     }
     start()
@@ -91,14 +103,15 @@ const goToResend = async () => {
 
 const goToVerifyOTP = async () => {
   await VerifyOTP({
-    code: code.value.join(''),
-    temp_token: temp_token.value!.temp_token,
+    user_id: user_id.value!,
+    code: code.value.join(""),
+    action: props.action
   })
 
   if (error.value) {
-    console.error(error.value.code, error.value.error)
+    infoNotification("🚫 Ошибка. " + error.value)
   } else {
-    await router.push('/')
+    emit("ok")
   }
 }
 
@@ -111,71 +124,54 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="login-page">
-    <div class="otp-form">
-      <div class="form-title">
-        <AuthIcon img="send.svg" />
-        <div class="text-title">
-          <h4>Подтверждение почты</h4>
-          <p>Мы отправили код подтверждения на <span style="font-weight: 600">{{ email }}</span></p>
-        </div>
+  <div class="otp-form">
+    <div class="form-title">
+      <AuthIcon img="send.svg" />
+      <div class="text-title">
+        <h4>Подтверждение почты</h4>
+        <p>Мы отправили код подтверждения на <span style="font-weight: 600">{{ email }}</span></p>
       </div>
-      <div class="form-inputs">
-        <input
-          v-for="(digit, i) in code"
-          :key="i"
-          ref="inputs"
-          class="code-elem"
-          type="text"
-          inputmode="numeric"
-          maxlength="1"
-          autocomplete="one-time-code"
-          :value="digit"
-          placeholder="_"
-          @input="handleInput(i, $event)"
-          @keydown="handleKeyDown(i, $event)"
-          @paste="handlePaste($event, i)"
-        />
+    </div>
+    <div class="form-inputs">
+      <input
+        v-for="(digit, i) in code"
+        :key="i"
+        ref="inputs"
+        class="code-elem"
+        type="text"
+        inputmode="numeric"
+        maxlength="1"
+        autocomplete="one-time-code"
+        :value="digit"
+        placeholder="_"
+        @input="handleInput(i, $event)"
+        @keydown="handleKeyDown(i, $event)"
+        @paste="handlePaste($event, i)"
+      />
+    </div>
+    <div class="form-buttons">
+      <div>
+        <button
+          class="btn-continue"
+          @click="codeIsComplete ? goToVerifyOTP() : null"
+          :class="{ disabled: !codeIsComplete || isLoading }"
+        >
+          Подтвердить
+          <Spinner v-if="isLoading" size="small" color="white" />
+        </button>
+        <button class="btn-back" @click="emit('close')">Вернуться назад</button>
       </div>
-      <div class="form-buttons">
-        <div>
-          <button
-            class="btn-continue"
-            @click="codeIsComplete ? goToVerifyOTP() : null"
-            :class="{ disabled: !codeIsComplete || isLoading }"
-          >
-            Подтвердить
-            <Spinner v-if="isLoading" size="small" color="white" />
-          </button>
-          <button class="btn-back" @click="router.back()">Вернуться назад</button>
-        </div>
-        <p class="send-code">
-          Код не пришёл?
-          <span @click="goToResend" :class="{ active: !isActive }">
+      <p class="send-code">
+        Код не пришёл?
+        <span @click="goToResend" :class="{ active: !isActive }">
             {{ !isActive ? 'Отправить снова' : `${timeLeft}с` }}
           </span>
-        </p>
-      </div>
+      </p>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.login-page {
-  width: 100%;
-  height: 100vh;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: $gray-primary;
-
-  & > .select-language {
-    top: 32px;
-    right: 50px;
-  }
-}
 .otp-form {
   display: flex;
   flex-direction: column;

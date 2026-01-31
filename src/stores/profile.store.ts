@@ -9,6 +9,8 @@ import type { OnlineStatusResponse } from '@/types/profile/dto/profile.dto.ts'
 export const useProfileStore = defineStore('profile', {
   state: () => ({
     me: null as Profile | null,
+    search: "",
+    isSearching: false,
     isLoading: true,
     error: null as ErrorResponse | null,
   }),
@@ -52,6 +54,28 @@ export const useProfileStore = defineStore('profile', {
         return null
       } finally {
         this.isLoading = false
+      }
+    },
+
+    async FetchBySearch(query: string, limit: number): Promise<Profile[] | null> {
+      try {
+        this.isSearching = true
+        this.error = null
+
+        const response: Profile[] | ErrorResponse = await profileService.GetAllBySearch(query, limit)
+        if (isErrorResponse(response)) {
+          this.error = response
+          return null
+        }
+
+        return response
+      }
+      catch (error) {
+        this.error = { code: 500, error: error!.toString() }
+        return null
+      }
+      finally {
+        this.isSearching = false
       }
     },
 

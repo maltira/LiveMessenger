@@ -68,6 +68,9 @@ onUnmounted(() => {
 #select-lang-btn {
   position: fixed;
 
+  top: 32px;
+  right: 50px;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -90,7 +93,8 @@ onUnmounted(() => {
   gap: 4px;
 
   position: fixed;
-  top: 76px;
+  top: 78px;
+  right: 32px;
   width: 160px;
 
   padding: 4px;

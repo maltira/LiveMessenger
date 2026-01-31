@@ -5,8 +5,6 @@ import type { OnlineStatusResponse } from '@/types/profile/dto/profile.dto.ts'
 
 
 class ProfileService {
-  private baseUrl = import.meta.env.VITE_API_URL
-
   async MyProfile(): Promise<Profile | ErrorResponse> {
     const response = await apiFetch(`/user/profile`, {
       method: 'GET',
@@ -17,6 +15,14 @@ class ProfileService {
 
   async GetAll(): Promise<Profile[] | ErrorResponse> {
     const response = await apiFetch(`/user/profile/all`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    return response.json()
+  }
+
+  async GetAllBySearch(query: string, limit: number): Promise<Profile[] | ErrorResponse> {
+    const response = await apiFetch(`/user/profile/search?q=${query}&limit=${limit}`, {
       method: 'GET',
       credentials: 'include',
     })

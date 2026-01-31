@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/auth.store.ts'
-import router from '@/router'
-import { useProfileStore } from '@/stores/profile.store.ts'
-import { storeToRefs } from 'pinia'
-
-const profileStore = useProfileStore()
-const { me } = storeToRefs(profileStore)
-
-const authStore = useAuthStore()
-const { Logout } = authStore
-
-const goToLogout = async () => {
-  await Logout()
-  await router.push('/login')
-}
+import ChatsSideForm from '@/components/Forms/ChatsSideForm.vue'
+import SelectedChatForm from '@/components/Forms/SelectedChatForm.vue'
 </script>
 
 
 <template>
-  <h1>Привет, {{ me?.username }}</h1>
-  <button @click="goToLogout">Выйти</button>
+  <div class="home-view">
+    <ChatsSideForm/>
+    <SelectedChatForm/>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+.home-view {
+  display: flex;
+  gap: 6px;
+
+  padding: 32px;
+  background: $gray-primary;
+
+  width: 100%;
+  height: 100vh;
+}
+</style>

@@ -5,9 +5,12 @@ import { useAuthStore } from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
-import CodeForm from '@/components/UI/CodeForm.vue'
+import CodeForm from '@/components/Forms/CodeForm.vue'
+import SelectLanguage from '@/components/Buttons/SelectLanguage.vue'
+import { useNotification } from '@/composables/useNotifications.ts'
 
 // ? STORE
+const { infoNotification } = useNotification()
 const authStore = useAuthStore()
 const { isLoading, error, email, password, user_id } = storeToRefs(authStore)
 const { Login } = authStore
@@ -24,11 +27,15 @@ const goToLogin = async () => {
   })
 
   if (error.value) {
-    console.error(error.value.code, error.value.error)
+    infoNotification("🚫 Ошибка. " + error.value)
   } else if (res) {
     user_id.value = res.user_id
     isCodeRequired.value = true
   }
+}
+const okAction = () => {
+  infoNotification("👋 Добро пожаловать в Лайв!")
+  router.push('/')
 }
 </script>
 
@@ -38,7 +45,7 @@ const goToLogin = async () => {
       v-if="isCodeRequired"
       action="login"
       @close="isCodeRequired = false"
-      @ok="router.push('/')"
+      @ok="okAction"
     />
     <div v-else class="login-form">
       <div class="form-title">
@@ -88,6 +95,8 @@ const goToLogin = async () => {
         <p class="change-page">Нет аккаунта? <span @click="router.push('/register')">Регистрация</span></p>
       </div>
     </div>
+
+    <SelectLanguage/>
   </div>
 </template>
 
@@ -158,7 +167,7 @@ const goToLogin = async () => {
 
     & > p.input-info {
       @include tag-text;
-      font-weight: 600;
+      font-weight: 500;
       opacity: 0.6;
     }
 

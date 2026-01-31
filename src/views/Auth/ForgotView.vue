@@ -5,10 +5,13 @@ import { useAuthStore } from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
-import CodeForm from '@/components/UI/CodeForm.vue'
-import ResetForm from '@/components/UI/ResetForm.vue'
+import CodeForm from '@/components/Forms/CodeForm.vue'
+import ResetForm from '@/components/Forms/ResetForm.vue'
+import SelectLanguage from '@/components/Buttons/SelectLanguage.vue'
+import { useNotification } from '@/composables/useNotifications.ts'
 
 // ? STORE
+const { infoNotification } = useNotification()
 const authStore = useAuthStore()
 const { isLoading, error, email, user_id } = storeToRefs(authStore)
 const { ForgotPassword } = authStore
@@ -22,7 +25,7 @@ const goToReset = async () => {
   const res = await ForgotPassword(email.value!)
 
   if (error.value) {
-    console.error(error.value.code, error.value.error)
+    infoNotification("🚫 Ошибка. " + error.value)
   } else if (res) {
     user_id.value = res.user_id
     isCodeRequired.value = true
@@ -33,6 +36,12 @@ const closeAllForm = () => {
   isCodeRequired.value = false
   isCodeConfirm.value = false
 }
+
+const okAction = () => {
+  infoNotification("🔑 Пароль успешно восстановлен, войдите снова")
+  router.push('/login')
+}
+
 onMounted(() => {
   email.value = ""
 })
@@ -43,7 +52,7 @@ onMounted(() => {
     <ResetForm
       v-if="isCodeConfirm"
       @close="closeAllForm"
-      @ok="router.push('/login')"
+      @ok="okAction"
     />
     <CodeForm
       v-else-if="isCodeRequired && !isCodeConfirm"
@@ -56,7 +65,7 @@ onMounted(() => {
         <AuthIcon img="mail.svg"/>
         <div class="text-title">
           <h4>Восстановление пароля</h4>
-          <p>Введите ваш email, указанный при регистрации</p>
+          <p>Введите ваш email, который вы указали при регистрации</p>
         </div>
       </div>
       <div class="form-inputs">
@@ -79,6 +88,8 @@ onMounted(() => {
         <p class="change-page">Вспомнили пароль? <span @click="router.push('/login')">Войти</span></p>
       </div>
     </div>
+
+    <SelectLanguage/>
   </div>
 </template>
 
@@ -149,7 +160,7 @@ onMounted(() => {
 
     & > p.input-info {
       @include tag-text;
-      font-weight: 600;
+      font-weight: 500;
       opacity: 0.6;
     }
 

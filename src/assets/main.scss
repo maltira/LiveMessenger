@@ -1,24 +1,19 @@
 @use 'variables';
 
 @font-face {
-  font-family: 'Lato';
-  src: url("public/fonts/Lato-Regular.ttf") format("opentype");
-  font-weight: 400;
+  font-family: Inter;
+  src: url("public/fonts/Inter_18pt-Regular.ttf") format("opentype");
+  font-weight: normal;
 }
 @font-face {
-  font-family: 'Lato';
-  src: url("public/fonts/Lato-Medium.ttf") format("opentype");
+  font-family: Inter;
+  src: url("public/fonts/Inter_18pt-Medium.ttf") format("opentype");
   font-weight: 500;
 }
 @font-face {
-  font-family: 'Lato';
-  src: url("public/fonts/Lato-SemiBold.ttf") format("opentype");
+  font-family: Inter;
+  src: url("public/fonts/Inter_18pt-SemiBold.ttf") format("opentype");
   font-weight: 600;
-}
-@font-face {
-  font-family: 'Lato';
-  src: url("public/fonts/Lato-Bold.ttf") format("opentype");
-  font-weight: 700;
 }
 
 body {
@@ -39,12 +34,8 @@ h1, h2, h4, p {
   color: $black-primary;
 }
 * {
-  font-family:
-          "SF Pro Display",
-          -apple-system,
-          'Segoe UI',
-          'Helvetica Neue',
-          sans-serif;
+  line-height: 1.5;
+  font-family: Inter, sans-serif;
   padding: 0;
   margin: 0;
   border: none;
