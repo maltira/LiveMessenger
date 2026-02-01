@@ -1,3 +1,5 @@
+import { useBlockStore } from '@/stores/block.store.ts'
+
 class WSStatusService {
   private wsUrl = import.meta.env.VITE_WS_API_URL
   private socket: WebSocket | null = null
@@ -8,6 +10,17 @@ class WSStatusService {
 
     this.socket.onopen = () => {
       console.log('WebSocket connected')
+    }
+
+    this.socket.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data)
+        if (msg.type === "block_update") {
+          useBlockStore().blockedMeBy[msg.blocker_id] = msg.is_blocked
+        }
+      } catch (e) {
+        console.error("websocket onmessage:", e)
+      }
     }
 
     this.socket.onerror = (error) => {

@@ -1,34 +1,5 @@
 @use "@/assets/variables.scss" as *;
-
-@mixin blue-fill-btn {
-  @include button-text;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-
-  width: 100%;
-  height: 48px;
-  padding: 16px;
-
-  border-radius: 99px;
-  background: $blue-color;
-  color: $white-primary;
-
-  cursor: pointer;
-
-  &:hover {
-    background: #3F90F9;
-  }
-
-  &.disabled {
-    pointer-events: none;
-    opacity: 0.4;
-  }
-}
-
-@mixin gray-inline-btn {
+@mixin base-btn {
   @include button-text;
 
   display: flex;
@@ -41,17 +12,37 @@
   padding: 16px;
 
   border-radius: 99px;
-  background: transparent;
-  color: rgba($black-primary, 0.6);
-  border: 1px solid rgba($black-primary, 0.1);
-
   cursor: pointer;
-
+  
   & > img {
     width: 24px;
     height: 24px;
     opacity: 0.6;
   }
+
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}
+
+@mixin blue-fill-btn {
+  @include base-btn;
+
+  background: $blue-color;
+  color: $white-primary;
+
+  &:hover {
+    background: #3F90F9;
+  }
+}
+
+@mixin inline-btn {
+  @include base-btn;
+
+  background: transparent;
+  color: rgba($black-primary, 0.6);
+  border: 1px solid rgba($black-primary, 0.1);
 
   &:hover {
     color: rgba($black-primary, 0.8);
@@ -62,9 +53,31 @@
     }
   }
 
-  &.disabled {
-    pointer-events: none;
-    opacity: 0.4;
+  &.red {
+    color: rgba($red-color, 0.6);
+    border: 1px solid rgba($red-color, 0.6);
+
+    &:hover {
+      color: rgba($red-color, 0.8);
+      border: 1px solid rgba($red-color, 0.8);
+
+      & > img {
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
+@mixin gray-fill-btn {
+  @include base-btn;
+  background: $gray-primary;
+  color: rgba($black-primary, 0.8);
+
+  & > img {
+    opacity: 0.8;
+  }
+  &:hover {
+    background: rgba($black-primary, 0.05)
   }
 }
 

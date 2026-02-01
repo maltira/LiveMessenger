@@ -15,8 +15,9 @@ export interface ResetPasswordRequest {
   new_password: string
 }
 
-export interface TempTokenRequest {
-  temp_token: string
+export interface BlockRequest {
+  profile_id: string
+  blocked_profile_id: string
 }
 
 export interface DeleteAccountRequest {

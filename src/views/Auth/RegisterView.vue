@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
-import CodeForm from '@/components/Forms/CodeForm.vue'
+import CodeForm from '@/components/Forms/Auth/CodeForm.vue'
 import SelectLanguage from '@/components/Buttons/SelectLanguage.vue'
 import { useNotification } from '@/composables/useNotifications.ts'
 

@@ -7,7 +7,6 @@ import { useOtpTimer } from '@/composables/useOtpTimer.ts'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
 import { useNotification } from '@/composables/useNotifications.ts'
 
-
 // ? PROPS & EMIT
 interface Props {
   action: "login" | "register" | "forgot-password"
@@ -238,7 +237,7 @@ onMounted(() => {
       @include blue-fill-btn;
     }
     & > .btn-back {
-      @include gray-inline-btn;
+      @include inline-btn;
     }
   }
   & > .send-code {

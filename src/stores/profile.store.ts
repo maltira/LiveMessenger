@@ -9,8 +9,12 @@ import type { OnlineStatusResponse } from '@/types/profile/dto/profile.dto.ts'
 export const useProfileStore = defineStore('profile', {
   state: () => ({
     me: null as Profile | null,
+    selectedProfile: null as Profile | null,
+
     search: "",
+    findingProfiles: [] as Profile[],
     isSearching: false,
+
     isLoading: true,
     error: null as ErrorResponse | null,
   }),

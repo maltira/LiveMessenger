@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import ChatsSideForm from '@/components/Forms/ChatsSideForm.vue'
-import SelectedChatForm from '@/components/Forms/SelectedChatForm.vue'
+import ChatListPanel from '@/components/Forms/ProfileSide/ChatListPanel.vue'
+import SelectedChatForm from '@/components/Forms/ChatSide/SelectedChatForm.vue'
 </script>
-
 
 <template>
   <div class="home-view">
-    <ChatsSideForm/>
+    <ChatListPanel/>
     <SelectedChatForm/>
   </div>
 </template>

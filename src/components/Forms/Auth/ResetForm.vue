@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import router from '@/router'
 import Spinner from '@/components/UI/Spinner.vue'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
 import { computed, ref } from 'vue'
@@ -194,7 +193,7 @@ const resetPassword = async () => {
     @include blue-fill-btn;
   }
   & > .btn-back {
-    @include gray-inline-btn;
+    @include inline-btn;
   }
 }
 </style>

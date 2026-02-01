@@ -12,7 +12,7 @@ const emit = defineEmits<{
 
 // ? STORE
 const profileStore = useProfileStore()
-const { me } = storeToRefs(profileStore)
+const { me, selectedProfile } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { Logout } = authStore
 
@@ -46,6 +46,10 @@ const goToLogout = async () => {
   await Logout()
   await router.push('/login')
 }
+const goToMyProfile = () => {
+  selectedProfile.value = me.value
+  handleClose()
+}
 
 onMounted(() => {
   setTimeout(() => {
@@ -76,7 +80,7 @@ onUnmounted(() => {
       </div>
     </div>
     <div class="divider"></div>
-    <div class="modal-link">
+    <div class="modal-link" @click="goToMyProfile">
       <img src="/icons/user.svg" alt="user">
       <p class="link-name">Мой профиль</p>
     </div>
@@ -109,6 +113,7 @@ onUnmounted(() => {
 .my-profile-modal {
   opacity: 0;
   transform: scale(0.9);
+  transform-origin: 0 0;
 
   position: absolute;
   top: 50px;
