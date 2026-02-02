@@ -7,6 +7,7 @@ import { useProfileStore } from '@/stores/profile.store.ts'
 import { useNotification } from '@/composables/useNotifications.ts'
 import Skeleton from '@/components/UI/Skeleton.vue'
 import { useOnlineStore } from '@/stores/online.store.ts'
+import { useBlockStore } from '@/stores/block.store.ts'
 
 // ? STORE
 const { infoNotification } = useNotification()
@@ -15,8 +16,9 @@ const { isSearching, error, search, selectedProfile, findingProfiles } = storeTo
 const { FetchBySearch } = profileStore
 const searchElement = ref<HTMLElement | null>(null)
 const onlineStore = useOnlineStore()
-const { onlineProfiles } = storeToRefs(onlineStore)
 const { fetchProfileOnline } = onlineStore
+const blockStore = useBlockStore()
+const { CheckIfBlockedMe } = blockStore
 
 // ? REF
 const isProfileModalOpen = ref(false)
@@ -33,9 +35,10 @@ const isAddHide = computed(() => {
   return search.value || (searchElement.value && document.activeElement === searchElement.value)
 })
 const isFetchingStatus = ref(false)
+const isFetchingBlock = ref(false)
 
 const isLoading = computed(() => {
-  return isSearching.value || isFetchingStatus.value
+  return isSearching.value || isFetchingStatus.value || isFetchingBlock.value
 })
 
 watch(search, (value) => {
@@ -44,13 +47,16 @@ watch(search, (value) => {
   } else {
     isSearching.value = true
     isFetchingStatus.value = true
+    isFetchingBlock.value = true
 
     setTimeout(async () => {
       await fetchProfiles(value)
       for (const profile of findingProfiles.value) {
         await fetchProfileOnline(profile.id)
+        await CheckIfBlockedMe(profile.id)
       }
       isFetchingStatus.value = false
+      isFetchingBlock.value = false
     }, 300)
 
   }

@@ -18,6 +18,7 @@ export const useBlockStore = defineStore('block', {
   }),
   getters: {
     isBlocked: (state) => (id: string) => state.blockedIds.has(id),
+    isBlockedMeBy: (state) => (id: string) => state.blockedMeBy[id] ?? false
   },
   actions: {
     async FetchAll(): Promise<void> {
@@ -87,11 +88,8 @@ export const useBlockStore = defineStore('block', {
       }
     },
 
-    async CheckIfBlockedMe(targetID: string): Promise<boolean> {
-      // TODO: пофиксить по аналогии с onlineStore
-      if (targetID in this.blockedMeBy) {
-        return this.blockedMeBy[targetID] ?? false
-      }
+    async CheckIfBlockedMe(targetID: string): Promise<void> {
+      if (targetID in this.blockedMeBy) return
       try {
         this.isLoading = true
         this.error = null
@@ -99,14 +97,12 @@ export const useBlockStore = defineStore('block', {
         const response: boolean | ErrorResponse = await blockService.CheckBlock(targetID)
         if (isErrorResponse(response)) {
           this.error = response
-          return true
+          return
         }
         this.blockedMeBy[targetID] = response
-        return response
       }
       catch (error) {
         this.error = { code: 500, error: error!.toString() }
-        return true
       }
       finally {
         this.isLoading = false

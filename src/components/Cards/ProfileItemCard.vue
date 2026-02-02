@@ -2,9 +2,12 @@
 import type { Profile } from '@/types/profile/profile.model.ts'
 import { useOnlineStore } from '@/stores/online.store.ts'
 import { storeToRefs } from 'pinia'
+import { useBlockStore } from '@/stores/block.store.ts'
 
 const onlineStore = useOnlineStore()
 const { isUserOnline } = storeToRefs(onlineStore)
+const blockStore = useBlockStore()
+const { isBlockedMeBy } = storeToRefs(blockStore)
 
 interface Props {
   profile: Profile
@@ -15,8 +18,16 @@ const props = defineProps<Props>()
 <template>
   <div class="profile-element">
     <div class="avatar">
-      <img :src="`/img/avatars/${profile.avatar_url}`" alt="avatar" />
-      <div class="online-status" v-if="isUserOnline(profile.id)"></div>
+      <img
+        v-if="isBlockedMeBy(profile.id)"
+        class="img-avatar"
+        style="opacity: 0.4"
+        src="/icons/block-outline.svg"
+        alt="block.svg"
+      />
+      <img v-else class="img-avatar" :src="`/img/avatars/${profile.avatar_url}`" alt="avatar" />
+
+      <div class="online-status" :class="{active: isUserOnline(profile.id) && !isBlockedMeBy(profile.id)}"></div>
     </div>
     <div class="profile-data">
       <p class="full_name">{{ profile.full_name }}</p>
@@ -44,7 +55,7 @@ const props = defineProps<Props>()
 .avatar {
   position: relative;
 
-  & > img {
+  & > .img-avatar {
     max-width: 44px;
     height: 44px;
   }
@@ -54,12 +65,20 @@ const props = defineProps<Props>()
     right: 2px;
     bottom: 2px;
 
-    width: 12px;
-    height: 12px;
+    width: 4px;
+    height: 4px;
+    opacity: 0;
+
     background: $blue-color;
 
     border-radius: 99px;
     border: 2px solid $white-primary;
+
+    &.active {
+      width: 12px;
+      height: 12px;
+      opacity: 1;
+    }
   }
 }
 .profile-data {

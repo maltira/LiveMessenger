@@ -27,6 +27,7 @@ const {
   error: blockError,
   blockedMeBy,
   isBlocked,
+  isBlockedMeBy
 } = storeToRefs(blockStore)
 const { BlockProfile, UnblockProfile, CheckIfBlockedMe } = blockStore
 const onlineStore = useOnlineStore()
@@ -38,12 +39,6 @@ const forceUpdate = ref(0)
 let intervalId: number | null = null
 
 // ? COMPUTED
-const isProfileBlocked = computed(() => {
-  return isBlocked.value(profile.value!.id)
-})
-const isBlockedByThisUser = computed(() => {
-  return blockedMeBy.value[profile.value!.id] ?? false
-})
 const computeStatus = computed(() => {
   if (!profile.value!.Settings.show_online_status)
     return 'был(а) недавно'
@@ -62,11 +57,11 @@ const goToLogout = async () => {
   await Logout()
   await router.push('/login')
 }
-const goToBlock = async () => {
-  if (isProfileBlocked.value) {
-    await UnblockProfile(profile.value!.id)
-  } else {
+const goToBlock = async (isBlocking: boolean) => {
+  if (isBlocking) {
     await BlockProfile(profile.value!.id)
+  } else {
+    await UnblockProfile(profile.value!.id)
   }
 
   if (blockError.value) {
@@ -80,12 +75,8 @@ function copyClipboard(text: string) {
 
 onMounted(async () => {
   if (profile.value && profile.value.id) {
-    if (!(profile.value.id in blockedMeBy.value)) {
-      await CheckIfBlockedMe(profile.value.id)
-    }
-    if (!(profile.value.id in onlineProfiles.value)) {
-      await fetchProfileOnline(profile.value.id)
-    }
+    await CheckIfBlockedMe(profile.value.id)
+    await fetchProfileOnline(profile.value.id)
   }
   intervalId = setInterval(() => {
     forceUpdate.value++
@@ -132,7 +123,7 @@ onUnmounted(() => {
     <div class="profile-info">
       <div class="profile-info_header">
         <img
-          v-if="isBlockedByThisUser"
+          v-if="isBlockedMeBy(profile.id)"
           class="img-avatar"
           style="opacity: 0.4"
           src="/icons/block-outline.svg"
@@ -143,13 +134,13 @@ onUnmounted(() => {
         <div class="profile-header_title">
           <h5>{{ profile.full_name }}</h5>
 
-          <p v-if="isBlockedByThisUser">Доступ ограничен</p>
+          <p v-if="isBlockedMeBy(profile.id)">Доступ ограничен</p>
           <p v-else-if="me!.id === profile!.id">@{{ profile.username }}</p>
           <p v-else>{{ computeStatus }}</p>
         </div>
       </div>
       <div class="profile-info_body">
-        <div class="body_block" v-if="!isBlockedByThisUser">
+        <div class="body_block" v-if="!isBlockedMeBy(profile.id)">
           <p class="title-block">О себе</p>
           <p class="info-block">{{ profile.bio || 'Не указано' }}</p>
         </div>
@@ -159,14 +150,14 @@ onUnmounted(() => {
         </div>
         <div
           class="body_block"
-          v-if="!isBlockedByThisUser && profile.Settings.show_birth_date !== 'nobody'"
+          v-if="!isBlockedMeBy(profile.id) && profile.Settings.show_birth_date !== 'nobody'"
         >
           <p class="title-block">Дата рождения</p>
           <p class="info-block">
             {{ profile.birth_date ? formatBirthDate(profile.birth_date) : 'Не указано' }}
           </p>
         </div>
-        <div class="body_block" v-if="!isBlockedByThisUser">
+        <div class="body_block" v-if="!isBlockedMeBy(profile.id)">
           <p class="title-block">Дата регистрации</p>
           <p class="info-block">{{ formatBirthDate(profile.created_at) }}</p>
         </div>
@@ -180,11 +171,11 @@ onUnmounted(() => {
       <div
         class="red-btn red"
         v-if="me.id !== profile.id"
-        @click="goToBlock"
+        @click="goToBlock(!isBlocked(profile.id))"
         :class="{ disabled: blockLoading }"
       >
         <img src="/icons/block-red.svg" alt="block-red.svg" />
-        {{ isProfileBlocked ? 'Разблокировать' : 'Заблокировать' }}
+        {{ isBlocked(profile.id) ? 'Разблокировать' : 'Заблокировать' }}
       </div>
       <div v-else class="red-btn red" @click="goToLogout">
         <img src="/icons/exit-red.svg" alt="exit" />
