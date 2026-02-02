@@ -50,7 +50,6 @@ watch(search, (value) => {
       for (const profile of findingProfiles.value) {
         await fetchProfileOnline(profile.id)
       }
-      console.log(onlineProfiles.value)
       isFetchingStatus.value = false
     }, 300)
 

@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth.store.ts'
 import router from '@/router'
 import { useBlockStore } from '@/stores/block.store.ts'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useNotification } from '@/composables/useNotifications.ts'
 import Skeleton from '@/components/UI/Skeleton.vue'
 import { formatBirthDate, timeAgo } from '@/utils/DateFormat.ts'
@@ -22,11 +22,20 @@ const { me, selectedProfile: profile } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { Logout } = authStore
 const blockStore = useBlockStore()
-const { isLoading: blockLoading, error: blockError, blockedMeBy, isBlocked } = storeToRefs(blockStore)
+const {
+  isLoading: blockLoading,
+  error: blockError,
+  blockedMeBy,
+  isBlocked,
+} = storeToRefs(blockStore)
 const { BlockProfile, UnblockProfile, CheckIfBlockedMe } = blockStore
 const onlineStore = useOnlineStore()
 const { onlineProfiles, isUserOnline, userLastSeen } = storeToRefs(onlineStore)
 const { fetchProfileOnline } = onlineStore
+
+// ? REF
+const forceUpdate = ref(0)
+let intervalId: number | null = null
 
 // ? COMPUTED
 const isProfileBlocked = computed(() => {
@@ -52,13 +61,18 @@ const goToBlock = async () => {
     infoNotification('🚫 Ошибка. ' + blockError.value)
   }
 }
+
 const computeStatus = computed(() => {
-  if (!profile.value!.Settings.show_online_status) return "Был(а) недавно"
-  else if (isUserOnline.value(profile.value!.id)) {
-    return "В сети"
-  } else {
-    return timeAgo(userLastSeen.value(profile.value!.id)!)
-  }
+  if (!profile.value!.Settings.show_online_status)
+    return 'был(а) недавно'
+  if (isUserOnline.value(profile.value!.id))
+    return 'в сети'
+
+  const lastSeenDate = userLastSeen.value(profile.value!.id)
+  if (!lastSeenDate) return "был(а) недавно"
+
+  forceUpdate.value // forceUpdate будет заставлять пересчитать время
+  return 'был(а) ' + timeAgo(userLastSeen.value(profile.value!.id)!)
 })
 
 onMounted(async () => {
@@ -69,6 +83,14 @@ onMounted(async () => {
     if (!(profile.value.id in onlineProfiles.value)) {
       await fetchProfileOnline(profile.value.id)
     }
+  }
+  intervalId = setInterval(() => {
+    forceUpdate.value++
+  }, 60000) // каждые 60с.
+})
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId)
   }
 })
 </script>
@@ -82,26 +104,37 @@ onMounted(async () => {
       <img src="/icons/settings.svg" alt="settings" />
     </div>
   </div>
-  <div v-if="!profile || blockedMeBy[profile.id] === undefined || onlineProfiles[profile.id] === undefined" class="form-content skeleton" >
+  <div
+    v-if="
+      !profile || blockedMeBy[profile.id] === undefined || onlineProfiles[profile.id] === undefined
+    "
+    class="form-content skeleton"
+  >
     <div class="profile-info">
       <div class="profile-info_header">
-        <Skeleton class="img-avatar skeleton" border-radius="99px"/>
+        <Skeleton class="img-avatar skeleton" border-radius="99px" />
         <div class="profile-header_title">
-          <Skeleton width="50%" border-radius="99px"/>
-          <Skeleton width="20%" height="19.2px" border-radius="99px"/>
+          <Skeleton width="50%" border-radius="99px" />
+          <Skeleton width="20%" height="19.2px" border-radius="99px" />
         </div>
       </div>
-      <Skeleton height="280px"/>
+      <Skeleton height="280px" />
     </div>
     <div class="profile-actions">
-      <Skeleton height="48px" border-radius="99px"/>
-      <Skeleton height="48px" border-radius="99px"/>
+      <Skeleton height="48px" border-radius="99px" />
+      <Skeleton height="48px" border-radius="99px" />
     </div>
   </div>
   <div v-else class="form-content">
     <div class="profile-info">
       <div class="profile-info_header">
-        <img v-if="isBlockedByThisUser" class="img-avatar" style="opacity: 0.4;" src="/icons/block-outline.svg" alt="block.svg">
+        <img
+          v-if="isBlockedByThisUser"
+          class="img-avatar"
+          style="opacity: 0.4"
+          src="/icons/block-outline.svg"
+          alt="block.svg"
+        />
         <img v-else class="img-avatar" :src="`/img/avatars/${profile!.avatar_url}`" alt="avatar" />
 
         <div class="profile-header_title">
@@ -121,13 +154,18 @@ onMounted(async () => {
           <p class="title-block">Имя пользователя</p>
           <p class="info-block">@{{ profile!.username }}</p>
         </div>
-        <div class="body_block" v-if="!isBlockedByThisUser && profile!.Settings.show_birth_date !== 'nobody'">
+        <div
+          class="body_block"
+          v-if="!isBlockedByThisUser && profile!.Settings.show_birth_date !== 'nobody'"
+        >
           <p class="title-block">Дата рождения</p>
-          <p class="info-block">{{ profile!.birth_date ? formatBirthDate(profile!.birth_date) : 'Не указано' }}</p>
+          <p class="info-block">
+            {{ profile!.birth_date ? formatBirthDate(profile!.birth_date) : 'Не указано' }}
+          </p>
         </div>
         <div class="body_block" v-if="!isBlockedByThisUser">
           <p class="title-block">Дата регистрации</p>
-          <p class="info-block">{{ profile!.created_at }}</p>
+          <p class="info-block">{{ formatBirthDate(profile!.created_at) }}</p>
         </div>
       </div>
     </div>
@@ -184,7 +222,7 @@ onMounted(async () => {
     @include tag-text;
     opacity: 0.6;
     text-align: center;
-    width: 80%
+    width: 80%;
   }
 }
 .form-content {
