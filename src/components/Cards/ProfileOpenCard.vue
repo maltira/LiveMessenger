@@ -44,6 +44,18 @@ const isProfileBlocked = computed(() => {
 const isBlockedByThisUser = computed(() => {
   return blockedMeBy.value[profile.value!.id] ?? false
 })
+const computeStatus = computed(() => {
+  if (!profile.value!.Settings.show_online_status)
+    return 'был(а) недавно'
+  if (isUserOnline.value(profile.value!.id))
+    return 'в сети'
+
+  const lastSeenDate = userLastSeen.value(profile.value!.id)
+  if (!lastSeenDate) return "был(а) недавно"
+
+  forceUpdate.value // forceUpdate будет заставлять пересчитать время
+  return 'был(а) ' + timeAgo(userLastSeen.value(profile.value!.id)!)
+})
 
 // ? FUNCTIONS
 const goToLogout = async () => {
@@ -61,19 +73,10 @@ const goToBlock = async () => {
     infoNotification('🚫 Ошибка. ' + blockError.value)
   }
 }
-
-const computeStatus = computed(() => {
-  if (!profile.value!.Settings.show_online_status)
-    return 'был(а) недавно'
-  if (isUserOnline.value(profile.value!.id))
-    return 'в сети'
-
-  const lastSeenDate = userLastSeen.value(profile.value!.id)
-  if (!lastSeenDate) return "был(а) недавно"
-
-  forceUpdate.value // forceUpdate будет заставлять пересчитать время
-  return 'был(а) ' + timeAgo(userLastSeen.value(profile.value!.id)!)
-})
+function copyClipboard(text: string) {
+  infoNotification("Имя пользователя скопировано")
+  return navigator.clipboard.writeText(text);
+}
 
 onMounted(async () => {
   if (profile.value && profile.value.id) {
@@ -135,37 +138,37 @@ onUnmounted(() => {
           src="/icons/block-outline.svg"
           alt="block.svg"
         />
-        <img v-else class="img-avatar" :src="`/img/avatars/${profile!.avatar_url}`" alt="avatar" />
+        <img v-else class="img-avatar" :src="`/img/avatars/${profile.avatar_url}`" alt="avatar" />
 
         <div class="profile-header_title">
-          <h5>{{ profile!.full_name }}</h5>
+          <h5>{{ profile.full_name }}</h5>
 
           <p v-if="isBlockedByThisUser">Доступ ограничен</p>
-          <p v-else-if="me!.id === profile!.id">@{{ profile!.username }}</p>
+          <p v-else-if="me!.id === profile!.id">@{{ profile.username }}</p>
           <p v-else>{{ computeStatus }}</p>
         </div>
       </div>
       <div class="profile-info_body">
         <div class="body_block" v-if="!isBlockedByThisUser">
           <p class="title-block">О себе</p>
-          <p class="info-block">{{ profile!.bio || 'Не указано' }}</p>
+          <p class="info-block">{{ profile.bio || 'Не указано' }}</p>
         </div>
-        <div class="body_block" v-if="me!.id !== profile!.id">
+        <div class="body_block" v-if="me!.id !== profile.id">
           <p class="title-block">Имя пользователя</p>
-          <p class="info-block">@{{ profile!.username }}</p>
+          <p class="info-block username" @click="copyClipboard(profile.username)">@{{ profile.username }}</p>
         </div>
         <div
           class="body_block"
-          v-if="!isBlockedByThisUser && profile!.Settings.show_birth_date !== 'nobody'"
+          v-if="!isBlockedByThisUser && profile.Settings.show_birth_date !== 'nobody'"
         >
           <p class="title-block">Дата рождения</p>
           <p class="info-block">
-            {{ profile!.birth_date ? formatBirthDate(profile!.birth_date) : 'Не указано' }}
+            {{ profile.birth_date ? formatBirthDate(profile.birth_date) : 'Не указано' }}
           </p>
         </div>
         <div class="body_block" v-if="!isBlockedByThisUser">
           <p class="title-block">Дата регистрации</p>
-          <p class="info-block">{{ formatBirthDate(profile!.created_at) }}</p>
+          <p class="info-block">{{ formatBirthDate(profile.created_at) }}</p>
         </div>
       </div>
     </div>
@@ -293,6 +296,13 @@ onUnmounted(() => {
     & > .info-block {
       @include input-text;
       line-height: 120%;
+
+      &.username {
+        cursor: pointer;
+        &:hover {
+          opacity: 0.8;
+        }
+      }
     }
   }
 }

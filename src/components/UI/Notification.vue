@@ -36,7 +36,7 @@ const { notifications, hideNotification } = useNotification()
   border: 1px solid $gray-primary;
   padding: 8px 32px;
   margin-bottom: 10px;
-  box-shadow: -4px 6px 32px 0 rgba(black, 0.06);
+  box-shadow: -4px 6px 32px 0 rgba(black, 0.02);
 
   cursor: pointer;
 
@@ -68,8 +68,8 @@ const { notifications, hideNotification } = useNotification()
 
 // Эффект при наведении
 .notification:hover {
-  transform: scale(1.02) translateY(0);
-  box-shadow: -4px 6px 40px 0 rgba(black, 0.12);
+  transform: scale(1.01) translateY(0);
+  box-shadow: -4px 6px 40px 0 rgba(black, 0.03);
 }
 
 .desc {
