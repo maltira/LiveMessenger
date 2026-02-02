@@ -3,29 +3,36 @@ import type { Profile } from '@/types/profile/profile.model.ts'
 import { useOnlineStore } from '@/stores/online.store.ts'
 import { storeToRefs } from 'pinia'
 import { useBlockStore } from '@/stores/block.store.ts'
+import { onMounted, ref } from 'vue'
+import Skeleton from '@/components/UI/Skeleton.vue'
 
 const onlineStore = useOnlineStore()
 const { isUserOnline } = storeToRefs(onlineStore)
 const blockStore = useBlockStore()
 const { isBlockedMeBy } = storeToRefs(blockStore)
 
+// ? REFS
+const avatarLoading = ref(true)
+
 interface Props {
   profile: Profile
 }
 const props = defineProps<Props>()
+onMounted(() => {
+  if (isBlockedMeBy.value(props.profile.id)) {
+    avatarLoading.value = false
+  }
+})
 </script>
 
 <template>
   <div class="profile-element">
     <div class="avatar">
-      <img
-        v-if="isBlockedMeBy(profile.id)"
-        class="img-avatar"
-        style="opacity: 0.4"
-        src="/icons/block-outline.svg"
-        alt="block.svg"
-      />
-      <img v-else class="img-avatar" :src="`/img/avatars/${profile.avatar_url}`" alt="avatar" />
+      <Skeleton v-if="avatarLoading" class="img-avatar" border-radius="99px" style="opacity: 0.6;" />
+      <div v-if="isBlockedMeBy(profile.id)" class="img-avatar blocked">
+        {{ profile.full_name[0] ? profile.full_name[0].toUpperCase() : "Н" }}
+      </div>
+      <img v-else @load="avatarLoading = false" class="img-avatar" :src="`/img/avatars/${profile.avatar_url}`" alt="avatar" />
 
       <div class="online-status" :class="{active: isUserOnline(profile.id) && !isBlockedMeBy(profile.id)}"></div>
     </div>
@@ -48,6 +55,7 @@ const props = defineProps<Props>()
 
   cursor: pointer;
   transition: background-color 1ms;
+
   &:hover {
     background: rgba($gray-primary, 0.5);
   }
@@ -57,7 +65,19 @@ const props = defineProps<Props>()
 
   & > .img-avatar {
     max-width: 44px;
-    height: 44px;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 99px;
+
+    &.blocked {
+      @include h5-text;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: $gray-primary;
+      color: rgba($black-primary, 0.3)
+    }
   }
 
   & > .online-status {
