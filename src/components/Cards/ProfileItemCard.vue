@@ -1,29 +1,22 @@
 <script setup lang="ts">
 import type { Profile } from '@/types/profile/profile.model.ts'
-import { useProfileStore } from '@/stores/profile.store.ts'
-import { onMounted, ref } from 'vue'
+import { useOnlineStore } from '@/stores/online.store.ts'
+import { storeToRefs } from 'pinia'
 
-const profileStore = useProfileStore()
-const { CheckOnlineStatus } = profileStore
+const onlineStore = useOnlineStore()
+const { isUserOnline } = storeToRefs(onlineStore)
 
 interface Props {
   profile: Profile
 }
 const props = defineProps<Props>()
-
-const isOnline = ref<boolean>(false)
-
-onMounted(async () => {
-  const res = await CheckOnlineStatus(props.profile.id)
-  if (res) isOnline.value = res.online
-})
 </script>
 
 <template>
   <div class="profile-element">
     <div class="avatar">
       <img :src="`/img/avatars/${profile.avatar_url}`" alt="avatar" />
-      <div class="online-status" v-if="isOnline"></div>
+      <div class="online-status" v-if="isUserOnline(profile.id)"></div>
     </div>
     <div class="profile-data">
       <p class="full_name">{{ profile.full_name }}</p>

@@ -2,16 +2,11 @@
 import MyProfileModal from '@/components/Modals/MyProfileModal.vue'
 import ProfileItemCard from '@/components/Cards/ProfileItemCard.vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import type { Profile } from '@/types/profile/profile.model.ts'
 import { storeToRefs } from 'pinia'
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { useNotification } from '@/composables/useNotifications.ts'
 import Skeleton from '@/components/UI/Skeleton.vue'
-
-// ? EMIT
-const emit = defineEmits<{
-  openProfile: [Profile]
-}>()
+import { useOnlineStore } from '@/stores/online.store.ts'
 
 // ? STORE
 const { infoNotification } = useNotification()
@@ -19,6 +14,9 @@ const profileStore = useProfileStore()
 const { isSearching, error, search, selectedProfile, findingProfiles } = storeToRefs(profileStore)
 const { FetchBySearch } = profileStore
 const searchElement = ref<HTMLElement | null>(null)
+const onlineStore = useOnlineStore()
+const { onlineProfiles } = storeToRefs(onlineStore)
+const { fetchProfileOnline } = onlineStore
 
 // ? REF
 const isProfileModalOpen = ref(false)
@@ -31,20 +29,33 @@ const fetchProfiles = async (value: string) => {
     infoNotification('🚫 Ошибка. ' + error.value)
   }
 }
+const isAddHide = computed(() => {
+  return search.value || (searchElement.value && document.activeElement === searchElement.value)
+})
+const isFetchingStatus = ref(false)
+
+const isLoading = computed(() => {
+  return isSearching.value || isFetchingStatus.value
+})
+
 watch(search, (value) => {
   if (value.length < 4) {
     findingProfiles.value = []
   } else {
     isSearching.value = true
+    isFetchingStatus.value = true
+
     setTimeout(async () => {
       await fetchProfiles(value)
+      for (const profile of findingProfiles.value) {
+        await fetchProfileOnline(profile.id)
+      }
+      console.log(onlineProfiles.value)
+      isFetchingStatus.value = false
     }, 300)
+
   }
 })
-const isAddHide = computed(() => {
-  return search.value || (searchElement.value && document.activeElement === searchElement.value)
-})
-
 onMounted(async() => {
   searchElement.value = document.getElementById('search-input')
 })
@@ -64,7 +75,7 @@ onMounted(async() => {
     </div>
   </div>
   <div v-if="search" class="search-data">
-    <div v-if="isSearching" class="found-data skeleton">
+    <div v-if="isLoading" class="found-data skeleton">
       <Skeleton v-for="i in 5" :key="i" width="414px" height="64px"/>
     </div>
     <div v-else-if="findingProfiles.length > 0" class="found-data">

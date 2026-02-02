@@ -88,6 +88,7 @@ export const useBlockStore = defineStore('block', {
     },
 
     async CheckIfBlockedMe(targetID: string): Promise<boolean> {
+      // TODO: пофиксить по аналогии с onlineStore
       if (targetID in this.blockedMeBy) {
         return this.blockedMeBy[targetID] ?? false
       }

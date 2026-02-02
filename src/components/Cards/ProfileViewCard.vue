@@ -8,6 +8,7 @@ import { computed, onMounted } from 'vue'
 import { useNotification } from '@/composables/useNotifications.ts'
 import Skeleton from '@/components/UI/Skeleton.vue'
 import { formatBirthDate, timeAgo } from '@/utils/DateFormat.ts'
+import { useOnlineStore } from '@/stores/online.store.ts'
 
 // ? EMIT
 const emit = defineEmits<{
@@ -23,6 +24,9 @@ const { Logout } = authStore
 const blockStore = useBlockStore()
 const { isLoading: blockLoading, error: blockError, blockedMeBy, isBlocked } = storeToRefs(blockStore)
 const { BlockProfile, UnblockProfile, CheckIfBlockedMe } = blockStore
+const onlineStore = useOnlineStore()
+const { onlineProfiles, isUserOnline, userLastSeen } = storeToRefs(onlineStore)
+const { fetchProfileOnline } = onlineStore
 
 // ? COMPUTED
 const isProfileBlocked = computed(() => {
@@ -48,10 +52,23 @@ const goToBlock = async () => {
     infoNotification('🚫 Ошибка. ' + blockError.value)
   }
 }
+const computeStatus = computed(() => {
+  if (!profile.value!.Settings.show_online_status) return "Был(а) недавно"
+  else if (isUserOnline.value(profile.value!.id)) {
+    return "В сети"
+  } else {
+    return timeAgo(userLastSeen.value(profile.value!.id)!)
+  }
+})
 
 onMounted(async () => {
-  if (profile.value && profile.value.id && !(profile.value.id in blockedMeBy)) {
-    await CheckIfBlockedMe(profile.value.id)
+  if (profile.value && profile.value.id) {
+    if (!(profile.value.id in blockedMeBy.value)) {
+      await CheckIfBlockedMe(profile.value.id)
+    }
+    if (!(profile.value.id in onlineProfiles.value)) {
+      await fetchProfileOnline(profile.value.id)
+    }
   }
 })
 </script>
@@ -65,7 +82,7 @@ onMounted(async () => {
       <img src="/icons/settings.svg" alt="settings" />
     </div>
   </div>
-  <div v-if="!profile || blockedMeBy[profile.id] === undefined" class="form-content skeleton" >
+  <div v-if="!profile || blockedMeBy[profile.id] === undefined || onlineProfiles[profile.id] === undefined" class="form-content skeleton" >
     <div class="profile-info">
       <div class="profile-info_header">
         <Skeleton class="img-avatar skeleton" border-radius="99px"/>
@@ -92,7 +109,7 @@ onMounted(async () => {
 
           <p v-if="isBlockedByThisUser">Доступ ограничен</p>
           <p v-else-if="me!.id === profile!.id">@{{ profile!.username }}</p>
-          <p v-else>{{ profile!.Settings.show_online_status && profile!.last_seen ? timeAgo(profile!.last_seen) : "Был(а) недавно" }}</p>
+          <p v-else>{{ computeStatus }}</p>
         </div>
       </div>
       <div class="profile-info_body">

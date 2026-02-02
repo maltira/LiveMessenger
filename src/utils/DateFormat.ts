@@ -2,6 +2,7 @@
 export function timeAgo(date: string | Date): string {
   if (!date) return 'неизвестно';
 
+  // TODO: верное отображение даты
   const now = Date.now();
   const past = new Date(date).getTime();
   const diffMs = now - past;
