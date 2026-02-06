@@ -16,10 +16,10 @@ class WSStatusService {
     this.socket.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data)
-        if (msg.type === "block_update") {
+        if (msg.event_type === "block_update") {
           useBlockStore().blockedMeBy[msg.blocker_id] = msg.is_blocked
         }
-        else if (msg.type === "status_update") {
+        else if (msg.event_type === "status_update") {
           const onlineStore = useOnlineStore()
           const { user_id, is_online, last_seen } = msg
 
@@ -31,6 +31,9 @@ class WSStatusService {
               last_seen: last_seen ? new Date(last_seen) : null,
             }
           }
+        }
+        else if (msg.event_type === "new_message") {
+
         }
       } catch (e) {
         console.error("websocket onmessage:", e)

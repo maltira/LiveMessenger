@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.store.ts'
 import router from '@/router'
 import { useProfileStore } from '@/stores/profile.store.ts'
-import { WSStatus } from '@/api/profile/ws.api.ts'
+import { WSStatus } from '@/api/ws.api.ts'
 import { useBlockStore } from '@/stores/block.store.ts'
 
 export function useAppInit() {

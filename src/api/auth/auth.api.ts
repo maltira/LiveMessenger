@@ -2,7 +2,6 @@ import type {
   AuthRequest,
   OTPSentResponse,
   ResetPasswordRequest,
-  TempTokenResponse,
   VerifyOTPRequest,
 } from '@/types/auth/auth.dto.ts'
 import type { ErrorResponse, MessageResponse } from '@/types/error.dto.ts'
