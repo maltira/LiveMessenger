@@ -11,7 +11,7 @@ import type { Message } from '@/types/chat/message.model.ts'
 
 export const useMessagesStore = defineStore('messages', {
   state: () => ({
-    chat: { id: "" as string, messages: [] as Message[] },
+    activeChat: { id: "" as string, messages: [] as Message[] },
 
     lastMessage: {} as Record<string, {msg_id: string, msg_content: string}>, // <chat_id, last_message>
 
@@ -19,6 +19,23 @@ export const useMessagesStore = defineStore('messages', {
     error: null as ErrorResponse | null,
   }),
   actions: {
+    InitilizeChat() {
+      let savedChat = localStorage.getItem('chatWithUser')
+      if (savedChat) {
+        this.activeChat = { id: 'profile:' + savedChat, messages: [] }
+      }
+    },
+    SelectChat(user_id: string | null) {
+      if (user_id === null) {
+        this.activeChat = { id: "", messages: []}
+        localStorage.removeItem('chatWithUser')
+      }
+      else {
+        this.activeChat = { id: 'profile:' + user_id, messages: [] }
+        localStorage.setItem('chatWithUser', user_id)
+      }
+    },
+
     async FetchMessages(chat_id: string): Promise<void> {
       try {
         this.isLoading = true
@@ -30,7 +47,7 @@ export const useMessagesStore = defineStore('messages', {
           return
         }
 
-        this.chat = { id: chat_id, messages: response.messages }
+        this.activeChat = { id: chat_id, messages: response.messages }
       }
       catch (error) {
         this.error = { code: 500, error: error!.toString() }
@@ -53,7 +70,7 @@ export const useMessagesStore = defineStore('messages', {
 
         this.lastMessage[chat_id] = {
           msg_id: response.id,
-          msg_content: computeContent(response.content, response.type)
+          msg_content: response.content
         }
       }
       catch (error) {
@@ -76,9 +93,9 @@ export const useMessagesStore = defineStore('messages', {
         }
         this.lastMessage[chat_id] = {
           msg_id: response.id,
-          msg_content: computeContent(response.content, response.type)
+          msg_content: response.content
         }
-        this.chat.messages.push(response)
+        this.activeChat.messages.push(response)
       }
       catch (error) {
         this.error = { code: 500, error: error!.toString() }
@@ -99,11 +116,11 @@ export const useMessagesStore = defineStore('messages', {
           return
         }
 
-        let index = this.chat.messages.findIndex(msg => msg.id === msg_id)
+        let index = this.activeChat.messages.findIndex(msg => msg.id === msg_id)
         if (index != -1) {
-          this.chat.messages[index]!.content = req.content
-          this.chat.messages[index]!.reply_to_message = req.reply_to_message
-          this.chat.messages[index]!.edited_at = new Date()
+          this.activeChat.messages[index]!.content = req.content
+          this.activeChat.messages[index]!.reply_to_message = req.reply_to_message
+          this.activeChat.messages[index]!.edited_at = new Date()
         }
 
         if (this.lastMessage[chat_id] && this.lastMessage[chat_id].msg_id !== msg_id) {
@@ -127,11 +144,11 @@ export const useMessagesStore = defineStore('messages', {
           return
         }
 
-        this.chat.messages = this.chat.messages.filter(msg => msg.id !== msg_id)
+        this.activeChat.messages = this.activeChat.messages.filter(msg => msg.id !== msg_id)
 
-        if (this.lastMessage[this.chat.id] && this.lastMessage[this.chat.id]!.msg_id === msg_id) {
-          if (this.chat.messages.length > 0) {
-            this.lastMessage[this.chat.id] = {msg_id: this.chat.messages[0]!.id, msg_content: this.chat.messages[0]!.content}
+        if (this.lastMessage[this.activeChat.id] && this.lastMessage[this.activeChat.id]!.msg_id === msg_id) {
+          if (this.activeChat.messages.length > 0) {
+            this.lastMessage[this.activeChat.id] = {msg_id: this.activeChat.messages[0]!.id, msg_content: this.activeChat.messages[0]!.content}
           }
         }
       } catch (error) {
@@ -142,10 +159,3 @@ export const useMessagesStore = defineStore('messages', {
     }
   }
 })
-
-function computeContent(content: string, type: string) {
-  if (type === "file") return "документ"
-  else if (type === "image") return "изображение"
-  else if (type === "video") return "видео"
-  else return content
-}

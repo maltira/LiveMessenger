@@ -39,6 +39,29 @@ export const useProfileStore = defineStore('profile', {
       }
     },
 
+    async FetchProfile(id: string): Promise<Profile | null> {
+      if (this.findingProfiles.some(profile => profile.id === id)) {
+        return this.findingProfiles.find(p => p.id === id) || null
+      }
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const response: Profile | ErrorResponse = await profileService.FetchProfile(id)
+        if (isErrorResponse(response)) {
+          this.error = response
+          return null
+        }
+
+        return response
+      } catch (error) {
+        this.error = { code: 500, error: error!.toString() }
+        return null
+      } finally {
+        this.isLoading = false
+      }
+    },
+
     async FetchAll(): Promise<Profile[] | null> {
       try {
         this.isLoading = true

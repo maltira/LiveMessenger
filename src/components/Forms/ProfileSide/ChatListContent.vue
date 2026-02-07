@@ -8,6 +8,8 @@ import { useNotification } from '@/composables/useNotifications.ts'
 import Skeleton from '@/components/UI/Skeleton.vue'
 import { useOnlineStore } from '@/stores/online.store.ts'
 import { useBlockStore } from '@/stores/block.store.ts'
+import { useChatsStore } from '@/stores/chats.store.ts'
+import ChatItemCard from '@/components/Cards/ChatItemCard.vue'
 
 // ? STORE
 const { infoNotification } = useNotification()
@@ -19,6 +21,8 @@ const onlineStore = useOnlineStore()
 const { fetchProfileOnline } = onlineStore
 const blockStore = useBlockStore()
 const { CheckIfBlockedMe } = blockStore
+const chatStore = useChatsStore()
+const { chats } = storeToRefs(chatStore)
 
 // ? REF
 const isProfileModalOpen = ref(false)
@@ -89,6 +93,9 @@ onMounted(async() => {
     <p v-else class="empty-data">Ничего не найдено</p>
   </div>
   <div v-else class="chat-data">
+    <div class="my-chats">
+      <ChatItemCard v-for="c in chats" :chat="c"/>
+    </div>
     <p class="empty-data">Здесь пока что пусто</p>
   </div>
 
@@ -129,9 +136,6 @@ onMounted(async() => {
       gap: 4px;
     }
   }
-  &.empty {
-    justify-content: center;
-  }
 }
 .chat-data {
   position: relative;
@@ -141,6 +145,13 @@ onMounted(async() => {
 
   width: 100%;
   height: 100%;
+
+  & > .my-chats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
 }
 
 .empty-data {

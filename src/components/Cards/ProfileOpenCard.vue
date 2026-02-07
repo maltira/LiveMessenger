@@ -9,6 +9,7 @@ import { useNotification } from '@/composables/useNotifications.ts'
 import Skeleton from '@/components/UI/Skeleton.vue'
 import { formatBirthDate, timeAgo } from '@/utils/DateFormat.ts'
 import { useOnlineStore } from '@/stores/online.store.ts'
+import { useMessagesStore } from '@/stores/message.store.ts'
 
 // ? EMIT
 const emit = defineEmits<{
@@ -33,6 +34,8 @@ const { BlockProfile, UnblockProfile, CheckIfBlockedMe } = blockStore
 const onlineStore = useOnlineStore()
 const { onlineProfiles, isUserOnline, userLastSeen } = storeToRefs(onlineStore)
 const { fetchProfileOnline } = onlineStore
+const messagesStore = useMessagesStore()
+const { SelectChat } = messagesStore
 
 // ? REF
 const forceUpdate = ref(0)
@@ -72,15 +75,28 @@ function copyClipboard(text: string) {
   infoNotification("Имя пользователя скопировано")
   return navigator.clipboard.writeText(text);
 }
+const handleClose = () => {
+  emit('close')
+  SelectChat(null)
+}
 
 onMounted(async () => {
+
+
   if (profile.value && profile.value.id) {
     await CheckIfBlockedMe(profile.value.id)
     await fetchProfileOnline(profile.value.id)
+
+    setTimeout(() => {
+      const shrinkAnimations = document.getElementById("shrink-animation-profile")
+      shrinkAnimations!.style.margin = "0";
+      shrinkAnimations!.style.opacity = "1";
+    }, 1)
   }
+
   intervalId = setInterval(() => {
     forceUpdate.value++
-  }, 60000) // каждые 60с.
+  }, 60000) // каждые 60с
 })
 onUnmounted(() => {
   if (intervalId) {
@@ -91,7 +107,7 @@ onUnmounted(() => {
 
 <template>
   <div class="form-header">
-    <div class="icon-btn" @click="emit('close')">
+    <div class="icon-btn" @click="handleClose">
       <img src="/icons/arrow.svg" alt="back" />
     </div>
     <div class="icon-btn" v-if="me!.id === profile!.id">
@@ -119,7 +135,7 @@ onUnmounted(() => {
       <Skeleton height="48px" border-radius="99px" />
     </div>
   </div>
-  <div v-else class="form-content">
+  <div id="shrink-animation-profile" v-else class="form-content">
     <div class="profile-info">
       <div class="profile-info_header">
         <img
@@ -164,7 +180,7 @@ onUnmounted(() => {
       </div>
     </div>
     <div class="profile-actions" v-if="profile && me">
-      <div class="gray-fill-btn" v-if="me.id !== profile.id">
+      <div class="gray-fill-btn" v-if="me.id !== profile.id" @click="SelectChat(profile.id)">
         <img src="/icons/message.svg" alt="open chat" />
         Перейти в чат
       </div>
@@ -186,6 +202,11 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+#shrink-animation-profile{
+  opacity: 0;
+  margin: 0 5px;
+  transition: 200ms;
+}
 .form-header {
   display: flex;
   align-items: center;

@@ -8,7 +8,13 @@ class ProfileService {
   async MyProfile(): Promise<Profile | ErrorResponse> {
     const response = await apiFetch(`/user/profile`, {
       method: 'GET',
-      credentials: 'include',
+    })
+    return response.json()
+  }
+
+  async FetchProfile(id: string): Promise<Profile | ErrorResponse> {
+    const response = await apiFetch(`/user/profile/${id}`, {
+      method: 'GET',
     })
     return response.json()
   }
@@ -16,7 +22,6 @@ class ProfileService {
   async GetAll(): Promise<Profile[] | ErrorResponse> {
     const response = await apiFetch(`/user/profile/all`, {
       method: 'GET',
-      credentials: 'include',
     })
     return response.json()
   }
@@ -24,7 +29,6 @@ class ProfileService {
   async GetAllBySearch(query: string, limit: number): Promise<Profile[] | ErrorResponse> {
     const response = await apiFetch(`/user/profile/search?q=${query}&limit=${limit}`, {
       method: 'GET',
-      credentials: 'include',
     })
     return response.json()
   }
@@ -32,7 +36,6 @@ class ProfileService {
   async OnlineStatus(userID: string): Promise<OnlineStatusResponse | ErrorResponse> {
     const response = await apiFetch(`/user/profile/${userID}/status`, {
       method: 'GET',
-      credentials: 'include',
     })
     return response.json()
   }

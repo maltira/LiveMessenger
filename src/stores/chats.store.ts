@@ -28,6 +28,9 @@ export const useChatsStore = defineStore('chats', {
           return
         }
         this.chats = response
+        response.forEach(chat => {
+          if (chat.type === "private") this.privateChats.add(chat.id)
+        })
       }
       catch (error) {
         this.error = { code: 500, error: error!.toString() }
