@@ -15,7 +15,7 @@ onMounted(async () => {
 <template>
   <RouterView v-if="isAppReady"/>
   <div v-else class="skeleton-loader">
-    <Skeleton width="462px" height="100%" border-radius="16px"/>
+    <Skeleton width="462px" height="100%" border-radius="16px" style="flex-shrink: 0;"/>
     <Skeleton width="100%" height="100%" border-radius="16px"/>
   </div>
   <Notification />

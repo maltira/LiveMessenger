@@ -20,19 +20,19 @@ export const useMessagesStore = defineStore('messages', {
   }),
   actions: {
     InitilizeChat() {
-      let savedChat = localStorage.getItem('chatWithUser')
+      let savedChat = localStorage.getItem('chat')
       if (savedChat) {
-        this.activeChat = { id: 'profile:' + savedChat, messages: [] }
+        this.activeChat = { id: savedChat, messages: [] }
       }
     },
-    SelectChat(user_id: string | null) {
-      if (user_id === null) {
+    SelectChat(id: string | null) {
+      if (id === null) {
         this.activeChat = { id: "", messages: []}
-        localStorage.removeItem('chatWithUser')
+        localStorage.removeItem('chat')
       }
       else {
-        this.activeChat = { id: 'profile:' + user_id, messages: [] }
-        localStorage.setItem('chatWithUser', user_id)
+        this.activeChat = { id: id, messages: [] }
+        localStorage.setItem('chat', id)
       }
     },
 

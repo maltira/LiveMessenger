@@ -18,6 +18,7 @@ const blockStore = useBlockStore()
 const { isBlockedMeBy } = storeToRefs(blockStore)
 const messagesStore = useMessagesStore()
 const { lastMessage } = storeToRefs(messagesStore)
+const { SelectChat } = messagesStore
 
 // ? REFS
 const profile = ref<Profile | null>(null)
@@ -40,7 +41,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="profile-element">
+  <div class="profile-element" @click="SelectChat(chat.id)">
     <div class="avatar">
       <Skeleton v-if="avatarLoading" class="img-avatar" border-radius="99px" style="opacity: 0.6;" />
       <div v-if="isBlockedMeBy(profile!.id) && chat.type === 'private'" class="img-avatar blocked">

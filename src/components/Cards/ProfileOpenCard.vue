@@ -81,8 +81,6 @@ const handleClose = () => {
 }
 
 onMounted(async () => {
-
-
   if (profile.value && profile.value.id) {
     await CheckIfBlockedMe(profile.value.id)
     await fetchProfileOnline(profile.value.id)
@@ -180,7 +178,7 @@ onUnmounted(() => {
       </div>
     </div>
     <div class="profile-actions" v-if="profile && me">
-      <div class="gray-fill-btn" v-if="me.id !== profile.id" @click="SelectChat(profile.id)">
+      <div class="gray-fill-btn" v-if="me.id !== profile.id" @click="SelectChat('profile:' + profile.id)">
         <img src="/icons/message.svg" alt="open chat" />
         Перейти в чат
       </div>

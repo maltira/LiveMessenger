@@ -2,7 +2,7 @@
 export function timeAgo(date: Date | string, now: Date = new Date()): string {
   const input = date instanceof Date ? date : new Date(date);
   if (Number.isNaN(input.getTime())) {
-    return "неизвестно";
+    return "недавно";
   }
 
   const diffMs = now.getTime() - input.getTime();
@@ -68,6 +68,12 @@ function formatDate(date: Date): string {
   return `${d}.${m}.${y}`;
 }
 
+export function formatTimeOnly(t: string | Date): string {
+  return new Date(t).toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 export function formatBirthDate(dateStr: string | Date): string {
   if (!dateStr) return '';
