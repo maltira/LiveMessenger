@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ChatListContent from '@/components/Forms/ProfileSide/ChatListContent.vue'
+import ChatListContent from '@/components/Forms/ChatList/ChatListContent.vue'
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
 import ProfileOpenCard from '@/components/Cards/ProfileOpenCard.vue'
@@ -10,7 +10,10 @@ const { selectedProfile } = storeToRefs(profileStore)
 
 <template>
   <div class="chats-side-form">
+    <!-- Отображается профиль (если он выбран) -->
     <ProfileOpenCard v-if="selectedProfile" @close="selectedProfile = null"/>
+
+    <!-- Иначе мои чаты -->
     <ChatListContent v-else/>
   </div>
 </template>

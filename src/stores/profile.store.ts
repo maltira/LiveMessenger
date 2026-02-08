@@ -18,6 +18,11 @@ export const useProfileStore = defineStore('profile', {
   }),
 
   actions: {
+    setActiveProfile(profile: Profile) {
+      if (this.selectedProfile && profile.id === this.selectedProfile.id) return
+      this.selectedProfile = profile
+    },
+
     async FetchMe(): Promise<Profile | null> {
       try {
         this.isLoading = true

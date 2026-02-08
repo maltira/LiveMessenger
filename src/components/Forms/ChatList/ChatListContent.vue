@@ -8,24 +8,27 @@ import { useNotification } from '@/composables/useNotifications.ts'
 import Skeleton from '@/components/UI/Skeleton.vue'
 import { useOnlineStore } from '@/stores/online.store.ts'
 import { useBlockStore } from '@/stores/block.store.ts'
-import { useChatsStore } from '@/stores/chats.store.ts'
 import ChatItemCard from '@/components/Cards/ChatItemCard.vue'
+import { useChatStore } from '@/stores/chats.store.ts'
 
 // ? STORE
 const { infoNotification } = useNotification()
+
 const profileStore = useProfileStore()
 const { isSearching, error, search, selectedProfile, findingProfiles } = storeToRefs(profileStore)
 const { FetchBySearch } = profileStore
-const searchElement = ref<HTMLElement | null>(null)
+
 const onlineStore = useOnlineStore()
 const { fetchProfileOnline } = onlineStore
 const blockStore = useBlockStore()
+
 const { CheckIfBlockedMe } = blockStore
-const chatStore = useChatsStore()
-const { chats } = storeToRefs(chatStore)
+const chatStore = useChatStore()
+const { chatsList } = storeToRefs(chatStore)
 
 // ? REF
 const isProfileModalOpen = ref(false)
+const searchElement = ref<HTMLElement | null>(null)
 
 // ? FUNCTIONS
 const fetchProfiles = async (value: string) => {
@@ -71,7 +74,7 @@ onMounted(async() => {
 </script>
 
 <template>
-  <div class="form-header">
+  <div class="sidebar-header">
     <div class="icon-btn" @click="isProfileModalOpen = true">
       <img src="/icons/menu.svg" alt="menu" />
     </div>
@@ -83,6 +86,7 @@ onMounted(async() => {
       <img src="/icons/add.svg" alt="add" />
     </div>
   </div>
+
   <div v-if="search" class="search-data">
     <div v-if="isLoading" class="found-data skeleton">
       <Skeleton v-for="i in 5" :key="i" width="414px" height="64px"/>
@@ -92,18 +96,19 @@ onMounted(async() => {
     </div>
     <p v-else class="empty-data">Ничего не найдено</p>
   </div>
+
   <div v-else class="chat-data">
-    <div class="my-chats">
-      <ChatItemCard v-for="c in chats" :chat="c"/>
+    <div v-if="chatsList.length > 0" class="my-chats">
+      <ChatItemCard v-for="c in chatsList" :chat="c"/>
     </div>
-    <p class="empty-data">Здесь пока что пусто</p>
+    <p v-else class="empty-data">Здесь пока что пусто</p>
   </div>
 
   <MyProfileModal v-if="isProfileModalOpen" @close="isProfileModalOpen = false" />
 </template>
 
 <style scoped lang="scss">
-.form-header {
+.sidebar-header {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -151,6 +156,10 @@ onMounted(async() => {
     flex-direction: column;
     align-items: center;
     width: 100%;
+
+    &.skeleton {
+      gap: 4px;
+    }
   }
 }
 

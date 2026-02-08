@@ -1,21 +1,16 @@
 <script setup lang="ts">
-import ChatListPanel from '@/components/Forms/ProfileSide/ChatListPanel.vue'
-import SelectedChatForm from '@/components/Forms/ChatSide/SelectedChatForm.vue'
-import { storeToRefs } from 'pinia'
-import { useMessagesStore } from '@/stores/message.store.ts'
+import ChatListContainer from '@/components/Forms/ChatList/ChatListContainer.vue'
+import ChatContainer from '@/components/Forms/ChatContainer.vue'
 
-const messagesStore = useMessagesStore()
-const { activeChat } = storeToRefs(messagesStore)
 </script>
 
 <template>
   <div class="home-view">
-    <ChatListPanel/>
-    <SelectedChatForm v-if="activeChat.id"/>
-    <div v-else class="empty-chat">
-      <img src="/icons/chat.svg" alt="empty chat" />
-      <p class="empty-data">Выберите или создайте чат</p>
-    </div>
+    <!-- Левая часть (со спискомм чатов) -->
+    <ChatListContainer/>
+
+    <!-- Правая часть (выбранный чат) -->
+    <ChatContainer/>
   </div>
 </template>
 
@@ -29,28 +24,5 @@ const { activeChat } = storeToRefs(messagesStore)
 
   width: 100%;
   height: 100vh;
-}
-.empty-chat {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  gap: 20px;
-
-  & > img {
-    width: 68px;
-    height: 68px;
-
-    filter: grayscale(100%);
-    opacity: 0.6;
-  }
-
-  & > .empty-data {
-    @include input-text;
-    opacity: 0.6;
-    text-align: center;
-  }
 }
 </style>

@@ -1,4 +1,3 @@
-import type { Chat } from '@/types/chat/chat.model.ts'
 
 export interface Message {
   id: string;
@@ -10,6 +9,4 @@ export interface Message {
 
   created_at: Date;
   edited_at: Date | null;
-
-  Chat: Chat;
 }

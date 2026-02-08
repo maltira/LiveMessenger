@@ -1,6 +1,7 @@
 import { useBlockStore } from '@/stores/block.store.ts'
 import { useOnlineStore } from '@/stores/online.store.ts'
-import { useMessagesStore } from '@/stores/message.store.ts'
+import { useChatStore } from '@/stores/chats.store.ts'
+import type { Message } from '@/types/chat/message.model.ts'
 
 class WSStatusService {
   private wsUrl = import.meta.env.VITE_WS_API_URL
@@ -35,7 +36,19 @@ class WSStatusService {
             }
             break
           case "new_message":
-            this.handleNewMessage(msg)
+            const chatStore = useChatStore()
+            const message: Message = {
+              id: msg.id,
+              chat_id: msg.chat_id,
+              user_id: msg.user_id,
+              content: msg.content,
+              type: msg.type,
+              created_at: msg.created_at,
+              reply_to_message: msg.reply_to_message,
+              edited_at: null,
+            }
+            console.log("new_message", message)
+            chatStore.addMessage(msg.chat_id, message)
             break
           default:
             console.debug('[WS] Unknown event:', msg.event_type)
@@ -59,21 +72,6 @@ class WSStatusService {
       this.socket.close()
       this.socket = null
       console.log('🔌 WS closed')
-    }
-  }
-
-  private handleNewMessage(msg: any) {
-    const messagesStore = useMessagesStore()
-
-    messagesStore.lastMessage[msg.chat_id] = {
-      msg_id: msg.id,
-      msg_content: msg.content,
-    }
-
-    if (messagesStore.activeChat.id === msg.chat_id) {
-      if (!messagesStore.activeChat.messages.some(m => m.id === msg.id)) {
-        messagesStore.activeChat.messages.push(msg)
-      }
     }
   }
 }

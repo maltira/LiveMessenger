@@ -9,7 +9,7 @@ import { useNotification } from '@/composables/useNotifications.ts'
 import Skeleton from '@/components/UI/Skeleton.vue'
 import { formatBirthDate, timeAgo } from '@/utils/DateFormat.ts'
 import { useOnlineStore } from '@/stores/online.store.ts'
-import { useMessagesStore } from '@/stores/message.store.ts'
+import { useChatStore } from '@/stores/chats.store.ts'
 
 // ? EMIT
 const emit = defineEmits<{
@@ -34,11 +34,13 @@ const { BlockProfile, UnblockProfile, CheckIfBlockedMe } = blockStore
 const onlineStore = useOnlineStore()
 const { onlineProfiles, isUserOnline, userLastSeen } = storeToRefs(onlineStore)
 const { fetchProfileOnline } = onlineStore
-const messagesStore = useMessagesStore()
-const { SelectChat } = messagesStore
+const chatStore = useChatStore()
+const { error: chatError, isLoading: chatLoading } = storeToRefs(chatStore)
+const { CreatePrivateChat } = chatStore
 
 // ? REF
 const forceUpdate = ref(0)
+const aProfile = ref<HTMLElement | null>(null)
 let intervalId: number | null = null
 
 // ? COMPUTED
@@ -76,8 +78,30 @@ function copyClipboard(text: string) {
   return navigator.clipboard.writeText(text);
 }
 const handleClose = () => {
-  emit('close')
-  SelectChat(null)
+  if (aProfile.value) {
+    aProfile.value.style.margin = "0 5px";
+    aProfile.value.style.opacity = "0";
+  }
+  setTimeout(() => {
+    emit('close')
+  }, 100)
+}
+const createChat = async () => {
+  if (profile.value) {
+    const chat = await CreatePrivateChat(profile.value.id)
+    if (chatError.value) {
+      infoNotification("🚫 Ошибка создания чата: " + chatError.value)
+    } else if (chat) {
+      await chatStore.setActiveChat(chat.id, me.value!.id)
+    } else {
+      const existingChat = chatStore.chatsList.find(
+        c => c.type === 'private' && c.participants.some(p => p.user_id === profile.value!.id)
+      )
+      if (existingChat) {
+        await chatStore.setActiveChat(existingChat.id, me.value!.id)
+      }
+    }
+  } else infoNotification("🚫 Ошибка создания чата: пользователь не выбран")
 }
 
 onMounted(async () => {
@@ -86,9 +110,11 @@ onMounted(async () => {
     await fetchProfileOnline(profile.value.id)
 
     setTimeout(() => {
-      const shrinkAnimations = document.getElementById("shrink-animation-profile")
-      shrinkAnimations!.style.margin = "0";
-      shrinkAnimations!.style.opacity = "1";
+      aProfile.value = document.getElementById("shrink-animation-profile")
+      if (aProfile.value) {
+        aProfile.value.style.margin = "0";
+        aProfile.value.style.opacity = "1";
+      }
     }, 1)
   }
 
@@ -178,7 +204,7 @@ onUnmounted(() => {
       </div>
     </div>
     <div class="profile-actions" v-if="profile && me">
-      <div class="gray-fill-btn" v-if="me.id !== profile.id" @click="SelectChat('profile:' + profile.id)">
+      <div class="gray-fill-btn" v-if="me.id !== profile.id" @click="createChat">
         <img src="/icons/message.svg" alt="open chat" />
         Перейти в чат
       </div>
@@ -203,7 +229,6 @@ onUnmounted(() => {
 #shrink-animation-profile{
   opacity: 0;
   margin: 0 5px;
-  transition: 200ms;
 }
 .form-header {
   display: flex;

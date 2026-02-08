@@ -1,94 +1,111 @@
 <script setup lang="ts">
-import { useMessagesStore } from '@/stores/message.store.ts'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import type { Profile } from '@/types/profile/profile.model.ts'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useProfileStore } from '@/stores/profile.store.ts'
-import Skeleton from '@/components/UI/Skeleton.vue'
 import { useOnlineStore } from '@/stores/online.store.ts'
 import { useBlockStore } from '@/stores/block.store.ts'
 import { formatTimeOnly, timeAgo } from '@/utils/DateFormat.ts'
-import { useChatsStore } from '@/stores/chats.store.ts'
+import { useChatStore } from '@/stores/chats.store.ts'
+import type { Profile } from '@/types/profile/profile.model.ts'
+import { useNotification } from '@/composables/useNotifications.ts'
 import type { MsgCreateRequest } from '@/types/chat/dto/message.dto.ts'
 
-const messagesStore = useMessagesStore()
-const { activeChat } = storeToRefs(messagesStore)
-const { FetchMessages, SendMessage, SelectChat } = messagesStore
-const chatStore = useChatsStore()
-const { CreatePrivate } = chatStore
+const { infoNotification } = useNotification()
+
 const profileStore = useProfileStore()
-const { me } = storeToRefs(profileStore)
+const { me, error: profileError } = storeToRefs(profileStore)
 const { FetchProfile } = profileStore
+
 const onlineStore = useOnlineStore()
 const { isUserOnline, userLastSeen } = storeToRefs(onlineStore)
-const { fetchProfileOnline } = onlineStore
 const blockStore = useBlockStore()
 const { isBlockedMeBy } = storeToRefs(blockStore)
-const { CheckIfBlockedMe } = blockStore
+
+const chatStore = useChatStore()
+const { activeChat, activeChatId, isLoading: chatLoading, error: chatError } = storeToRefs(chatStore)
 
 // ? REFS
+const profile = ref<Profile | null>(null)
 const messageInput = ref<string>('')
 const forceUpdate = ref(0)
-const avatarLoading = ref(true)
-const profile = ref<Profile | null>(null)
-const isPageLoading = ref<boolean>(true)
+const aChat = ref<HTMLElement | null>(null)
 let intervalId: number | null = null
 
-const computeStatus = computed(() => {
-  if (!profile.value!.Settings.show_online_status) return 'был(а) недавно'
-  if (isUserOnline.value(profile.value!.id)) return 'в сети'
-
-  const lastSeenDate = userLastSeen.value(profile.value!.id)
-  if (!lastSeenDate) return 'был(а) недавно'
-
-  forceUpdate.value // forceUpdate будет заставлять пересчитать время
-  return 'был(а) ' + timeAgo(userLastSeen.value(profile.value!.id)!)
-})
-const loadChat = async () => {
-  let splited = activeChat.value.id.split(':')
-  if (splited.length > 1 && splited[1]) {
-    // пустой чат
-    profile.value = await FetchProfile(splited[1])
-
-    if (isBlockedMeBy.value(profile.value!.id)) {
-      avatarLoading.value = false
+// ? FUNCTIONS
+const chatAvatar = computed(() => {
+  if (activeChat.value) {
+    if (activeChat.value.type === 'private' && profile.value) {
+      return "/img/avatars/" + profile.value.avatar_url
     }
-  } else {
-    // чат есть
-    await FetchMessages(activeChat.value.id)
-    let profile_id = activeChat.value.messages.find((m) => m.user_id !== me.value!.id)
-    console.log(activeChat.value.messages)
-    // profile.value = await FetchProfile(profile_id)
+    return "/img/avatars/" + activeChat.value.avatar_url || '/img/avatars/avatar-violet.png'
   }
+  return '/img/avatars/avatar-violet.png'
+})
+const computeStatus = computed(() => {
+  if (activeChat.value) {
+    if (activeChat.value.type !== 'private')
+      return activeChat.value.participants.length + ' участников'
+    if (isBlockedMeBy.value(profile.value!.id)) return 'был(а) давно'
+    if (!profile.value!.Settings.show_online_status) return 'был(а) недавно'
+
+    if (isUserOnline.value(profile.value!.id)) return 'в сети'
+
+    const lastSeenDate = userLastSeen.value(profile.value!.id)
+    if (!lastSeenDate) return 'был(а) недавно'
+
+    forceUpdate.value // forceUpdate будет заставлять пересчитать время
+    return 'был(а) ' + timeAgo(userLastSeen.value(profile.value!.id)!)
+  } else return 'чат не выбран'
+})
+const closeChat = () => {
+  if (aChat.value) {
+    aChat.value.style.padding = "12px 30px 24px 30px"
+    aChat.value.style.opacity = "0"
+  }
+  setTimeout(() => {
+    chatStore.clearActiveChat()
+  }, 50)
 }
 
 const sendMessage = async () => {
-  const req: MsgCreateRequest = {
-    content: messageInput.value,
-    type: 'text',
-    reply_to_message: null,
-  }
-  if (activeChat.value.id.split(':').length > 1) {
-    let chat = await CreatePrivate(profile.value!.id)
-    SelectChat(chat!.id)
-    await SendMessage(chat!.id, req)
-  } else {
-    await SendMessage(activeChat.value.id, req)
+  if (messageInput.value.trim().length > 0) {
+    const msg: MsgCreateRequest = {
+      content: messageInput.value,
+      type: 'text',
+      reply_to_message: null
+    }
+
+    await chatStore.SendMessage(activeChatId.value, msg)
+
+    if (chatError.value) {
+      infoNotification("🚫 Сообщение не отправлено: " + chatError.value)
+      return
+    }
+    messageInput.value = ''
   }
 }
 
+watch(activeChatId, async () => {
+  if (activeChat.value && activeChat.value.type === 'private') {
+    const interlocutor = activeChat.value.participants.find(p => p.user_id !== me.value!.id)
+    if (interlocutor) {
+      profile.value = await FetchProfile(interlocutor.user_id)
+
+      if (profileError.value) {
+        infoNotification("🚫 Ошибка загрузки пользователя: " + profileError.value)
+      } else if (profile.value) {
+        setTimeout(() => {
+          aChat.value = document.getElementById("active-chat")
+          if (aChat.value) {
+            aChat.value.style.padding = "12px 24px 24px 24px"
+            aChat.value.style.opacity = "1"
+          }
+        }, 1)
+      }
+    }
+  }
+})
 onMounted(async () => {
-  await loadChat()
-
-  if (profile.value && profile.value.id) {
-    await CheckIfBlockedMe(profile.value.id)
-    await fetchProfileOnline(profile.value.id)
-  }
-  isPageLoading.value = false
-  if (activeChat.value.id && isBlockedMeBy.value(profile.value!.id)) {
-    avatarLoading.value = false
-  }
-
   intervalId = setInterval(() => {
     forceUpdate.value++
   }, 60000) // каждые 60с
@@ -101,37 +118,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Skeleton v-if="isPageLoading" width="100%" height="100%" border-radius="16px" />
-  <div v-else class="active-chat">
+  <div v-if="activeChat && profile" id="active-chat">
     <div class="profile-element">
-      <div class="avatar">
-        <Skeleton
-          v-if="avatarLoading"
-          class="img-avatar"
-          border-radius="99px"
-          style="opacity: 0.6"
-        />
-        <div v-if="isBlockedMeBy(profile!.id)" class="img-avatar blocked">
-          {{ profile!.full_name[0] ? profile!.full_name[0].toUpperCase() : 'Н' }}
+      <img class="close-chat" @click="closeChat" src="/icons/arrow.svg" alt="arrow">
+      <div class="avatar" @click="profileStore.setActiveProfile(profile)">
+        <div v-if="isBlockedMeBy(profile.id)" class="img-avatar blocked">
+          {{ profile.full_name[0] ? profile.full_name[0].toUpperCase() : 'Н' }}
         </div>
-        <img
-          v-else
-          @load="avatarLoading = false"
-          class="img-avatar"
-          :src="`/img/avatars/${profile!.avatar_url}`"
-          alt="avatar"
-        />
-
-        <div
-          class="online-status"
-          :class="{ active: isUserOnline(profile!.id) && !isBlockedMeBy(profile!.id) }"
-        ></div>
+        <img v-else class="img-avatar" :src="chatAvatar" alt="avatar" />
       </div>
       <div class="profile-data">
-        <p class="full_name">{{ profile!.full_name }}</p>
-        <p class="status" v-if="isBlockedMeBy(profile!.id)">Доступ ограничен</p>
-        <p class="status" v-else-if="me!.id === profile!.id">@{{ profile!.username }}</p>
-        <p class="status" v-else>{{ computeStatus }}</p>
+        <p class="full_name" @click="profileStore.setActiveProfile(profile)">{{ profile.full_name }}</p>
+        <p class="status">{{ computeStatus }}</p>
       </div>
       <div class="buttons">
         <div class="action-btn">
@@ -142,8 +140,13 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
     <div v-if="activeChat.messages.length > 0" class="messages-list">
-      <div v-for="m in activeChat.messages" class="message-item" :class="{me: m.user_id === me!.id}">
+      <div
+        v-for="m in activeChat.messages"
+        class="message-item"
+        :class="{ me: m.user_id === me!.id }"
+      >
         <p class="message-time" v-if="m.user_id === me!.id">{{ formatTimeOnly(m.created_at) }}</p>
         <p class="message-content">{{ m.content }}</p>
         <p class="message-time" v-if="m.user_id !== me!.id">{{ formatTimeOnly(m.created_at) }}</p>
@@ -153,6 +156,7 @@ onUnmounted(() => {
       <img src="/img/animated-hello-gif.gif" alt="greeting" />
       <p>Начните общение прямо сейчас</p>
     </div>
+
     <div class="input-fields">
       <div class="icon-btn">
         <img src="/icons/add.svg" alt="add" />
@@ -164,24 +168,25 @@ onUnmounted(() => {
           autocomplete="off"
           v-model="messageInput"
           placeholder="Введите сообщение"
+          @keyup.enter="sendMessage"
         />
       </div>
       <div class="icon-btn">
         <img src="/icons/emoji-outline.svg" alt="emoji" />
       </div>
-      <div
-        class="icon-btn send-message-btn"
-        :class="{ disabled: !messageInput }"
-        @click="sendMessage"
-      >
+      <div class="icon-btn send-message-btn" @click="sendMessage" :class="{ disabled: !messageInput }">
         <img src="/icons/send-filled-white.svg" alt="send" />
       </div>
     </div>
   </div>
+  <div v-else class="empty-chat">
+    <img src="/icons/chat.svg" alt="empty chat" />
+    <p class="empty-data">Выберите или создайте чат</p>
+  </div>
 </template>
 
 <style scoped lang="scss">
-.active-chat {
+#active-chat {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -193,7 +198,11 @@ onUnmounted(() => {
   background: $white-primary;
   border-radius: 16px;
   border: 1px solid rgba($black-primary, 0.1);
-  padding: 12px 24px 24px 24px;
+  padding: 12px 30px 24px 30px;
+
+  opacity: 0;
+
+  transition: 50ms;
 
   & > .profile-element {
     display: flex;
@@ -204,8 +213,17 @@ onUnmounted(() => {
     padding: 12px 0;
     background: $white-primary;
 
+    & > .close-chat {
+      opacity: 0.6;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
     & > .avatar {
       position: relative;
+      cursor: pointer;
 
       & > .img-avatar {
         max-width: 44px;
@@ -255,6 +273,7 @@ onUnmounted(() => {
         @include button-text;
         line-height: 100%;
         width: 90%;
+        cursor: pointer;
       }
       & > .status {
         @include tag-text;
@@ -293,11 +312,16 @@ onUnmounted(() => {
 
 .messages-list {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: 12px;
+  flex-grow: 1;
 
   width: 100%;
   height: 100%;
+
+  overflow-y: auto;
+  scrollbar-color: rgba(0,0,0,0.05) transparent !important;
+  scrollbar-width: none;
 
   & > .message-item {
     display: flex;
@@ -315,10 +339,13 @@ onUnmounted(() => {
       background: $gray-primary;
       color: $black-primary;
       max-width: 340px;
+      line-height: 120%;
     }
     & > .message-time {
       @include tag-text;
+      font-size: 12px;
       opacity: 0.6;
+      margin-bottom: 4px;
     }
 
     &.me {
@@ -337,6 +364,7 @@ onUnmounted(() => {
   gap: 10px;
 
   width: 100%;
+  margin-top: 16px;
 
   & > .icon-btn {
     @include gray-icon-btn;
@@ -374,6 +402,29 @@ onUnmounted(() => {
 
   & > p {
     @include tag-text;
+    opacity: 0.6;
+    text-align: center;
+  }
+}
+.empty-chat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 20px;
+
+  & > img {
+    width: 68px;
+    height: 68px;
+
+    filter: grayscale(100%);
+    opacity: 0.6;
+  }
+
+  & > .empty-data {
+    @include input-text;
     opacity: 0.6;
     text-align: center;
   }
