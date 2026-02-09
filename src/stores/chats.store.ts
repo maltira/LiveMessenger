@@ -18,6 +18,8 @@ export interface ChatExtended extends Chat {
   messages: Message[]
   participants: Participant[]
   unread: number
+  inputValue?: string
+  replyTo?: Message
   lastMessage?: { msg_id: string; msg_content: string }
 }
 
@@ -41,7 +43,7 @@ export const useChatStore = defineStore('chats', {
       const chat = this.chats.get(chat_id)
       if (chat) {
         if (!chat.messages.some(m => m.id === msg.id)) {
-          chat.messages.push(msg)
+          chat.messages.unshift(msg)
         }
         chat.unread += 1
         chat.lastMessage = { msg_id: msg.id, msg_content: msg.content }

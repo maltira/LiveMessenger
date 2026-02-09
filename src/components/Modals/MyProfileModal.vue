@@ -27,7 +27,7 @@ const handleClose = () => {
 
   setTimeout(() => {
     emit('close')
-  }, 100)
+  }, 50)
 }
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {

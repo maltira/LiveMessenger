@@ -9,6 +9,8 @@ import { useChatStore } from '@/stores/chats.store.ts'
 import type { Profile } from '@/types/profile/profile.model.ts'
 import { useNotification } from '@/composables/useNotifications.ts'
 import type { MsgCreateRequest } from '@/types/chat/dto/message.dto.ts'
+import MessageActionModal from '@/components/Modals/MessageActionModal.vue'
+import type { Message } from '@/types/chat/message.model.ts'
 
 const { infoNotification } = useNotification()
 
@@ -25,8 +27,9 @@ const chatStore = useChatStore()
 const { activeChat, activeChatId, isLoading: chatLoading, error: chatError } = storeToRefs(chatStore)
 
 // ? REFS
+const pickerPosition = ref({ x: 0, y: 0 })
+const msgAction = ref<Message | null>(null)
 const profile = ref<Profile | null>(null)
-const messageInput = ref<string>('')
 const forceUpdate = ref(0)
 const aChat = ref<HTMLElement | null>(null)
 let intervalId: number | null = null
@@ -66,13 +69,19 @@ const closeChat = () => {
     chatStore.clearActiveChat()
   }, 50)
 }
+const toggleActionModal = (msg: Message, event: MouseEvent) => {
+  if (msgAction.value) msgAction.value = null
+
+  pickerPosition.value = {x: event.clientX - 180, y: event.clientY + 20}
+  msgAction.value = msg
+}
 
 const sendMessage = async () => {
-  if (messageInput.value.trim().length > 0) {
+  if (activeChat.value && activeChat.value.inputValue && activeChat.value.inputValue.trim().length > 0) {
     const msg: MsgCreateRequest = {
-      content: messageInput.value,
+      content: activeChat.value.inputValue,
       type: 'text',
-      reply_to_message: null
+      reply_to_message: activeChat.value.replyTo?.id || null
     }
 
     await chatStore.SendMessage(activeChatId.value, msg)
@@ -81,9 +90,21 @@ const sendMessage = async () => {
       infoNotification("🚫 Сообщение не отправлено: " + chatError.value)
       return
     }
-    messageInput.value = ''
+    activeChat.value.inputValue = ''
+    activeChat.value.replyTo = undefined
   }
 }
+const fetchProfileName = computed(() => {
+  if (activeChat.value && activeChat.value.replyTo) {
+    const id = activeChat.value.replyTo!.user_id
+    if (id) {
+      if (id === me.value!.id) return "Ваше сообщение"
+      return profile.value?.full_name || profile.value?.username
+    }
+    else return "Система"
+  }
+  return "Неизвестно"
+})
 
 watch(activeChatId, async () => {
   if (activeChat.value && activeChat.value.type === 'private') {
@@ -147,8 +168,16 @@ onUnmounted(() => {
         class="message-item"
         :class="{ me: m.user_id === me!.id }"
       >
+        <img v-if="m.user_id === me!.id" class="read-check" src="/icons/check-fill-blue.svg" alt="read-check">
         <p class="message-time" v-if="m.user_id === me!.id">{{ formatTimeOnly(m.created_at) }}</p>
-        <p class="message-content">{{ m.content }}</p>
+
+        <p class="message-content" @contextmenu.prevent="toggleActionModal(m, $event)">
+          <span v-if="m.reply_to_message">
+            {{ activeChat.messages.find(msg => msg.id === m.reply_to_message)?.content || "Не найдено" }}
+          </span>
+          {{ m.content }}
+        </p>
+
         <p class="message-time" v-if="m.user_id !== me!.id">{{ formatTimeOnly(m.created_at) }}</p>
       </div>
     </div>
@@ -161,20 +190,30 @@ onUnmounted(() => {
       <div class="icon-btn">
         <img src="/icons/add.svg" alt="add" />
       </div>
-      <div id="message-input" class="message-input" :class="{ active: messageInput }">
-        <input
-          type="text"
-          id="chat-message-input"
-          autocomplete="off"
-          v-model="messageInput"
-          placeholder="Введите сообщение"
-          @keyup.enter="sendMessage"
-        />
+      <div class="message-input-container">
+        <div id="reply-to-message" class="reply-to-message" v-if="activeChat && activeChat.replyTo">
+          <div class="content">
+            <p class="user">{{ fetchProfileName }}:</p>
+            <p class="msg-content">{{ activeChat.replyTo!.content }}</p>
+          </div>
+          <img class="cancel-reply" @click="activeChat.replyTo = undefined" src="/icons/close.svg" alt="cancel">
+        </div>
+        <div id="message-input" class="message-input" :class="{ active: activeChat.inputValue }">
+          <input
+            type="text"
+            id="chat-message-input"
+            autocomplete="off"
+            v-model="activeChat.inputValue"
+            placeholder="Введите сообщение"
+            @keyup.enter="sendMessage"
+          />
+        </div>
       </div>
+
       <div class="icon-btn">
         <img src="/icons/emoji-outline.svg" alt="emoji" />
       </div>
-      <div class="icon-btn send-message-btn" @click="sendMessage" :class="{ disabled: !messageInput }">
+      <div class="icon-btn send-message-btn" @click="sendMessage" :class="{ disabled: !activeChat.inputValue }">
         <img src="/icons/send-filled-white.svg" alt="send" />
       </div>
     </div>
@@ -183,6 +222,14 @@ onUnmounted(() => {
     <img src="/icons/chat.svg" alt="empty chat" />
     <p class="empty-data">Выберите или создайте чат</p>
   </div>
+
+  <MessageActionModal
+    v-if="msgAction"
+    :msg="msgAction"
+    :pos_y="pickerPosition.y"
+    :pos_x="pickerPosition.x"
+    @close="msgAction = null"
+  />
 </template>
 
 <style scoped lang="scss">
@@ -331,8 +378,17 @@ onUnmounted(() => {
     width: 100%;
     gap: 6px;
 
+    & > .read-check {
+      width: 14px;
+      height: 14px;
+      margin-bottom: 4px;
+    }
     & > .message-content {
       @include input-text;
+
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
 
       padding: 8px 16px;
       border-radius: 16px 16px 16px 0;
@@ -340,6 +396,26 @@ onUnmounted(() => {
       color: $black-primary;
       max-width: 340px;
       line-height: 120%;
+
+      & > span {
+        @include input-text;
+        display: flex;
+        align-items: center;
+
+        line-height: 120%;
+
+        padding: 8px 16px;
+        height: 33px;
+        border-left: 1px solid $white-primary;
+        border-radius: 0 8px 8px 0;
+        background: rgba($white-primary, 0.1);
+
+        cursor: pointer;
+
+        &:hover {
+          background: rgba($white-primary, 0.2);
+        }
+      }
     }
     & > .message-time {
       @include tag-text;
@@ -360,7 +436,7 @@ onUnmounted(() => {
 }
 .input-fields {
   display: flex;
-  align-items: center;
+  align-items: end;
   gap: 10px;
 
   width: 100%;
@@ -381,8 +457,68 @@ onUnmounted(() => {
       }
     }
   }
-  & > #message-input {
-    @include gray-fill-input;
+  & > .message-input-container{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+
+    & > .reply-to-message {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      width: 100%;
+
+      height: 34px;
+      padding: 8px 16px;
+      border-radius: 99px;
+      border: 1px solid rgba($black-primary, 0.1);
+      background: $white-primary;
+
+      opacity: 0;
+      transform: scale(0.9);
+      transition: 50ms;
+      
+      & > .content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+
+        & > p {
+          @include tag-text;
+          line-height: 120%;
+
+          &.user {
+            opacity: 0.6;
+            flex-shrink: 0;
+          }
+          &.msg-content {
+            opacity: 0.4;
+            width: 100%;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+
+      & > img {
+        cursor: pointer;
+        width: 18px;
+        height: 18px;
+        opacity: 0.6;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+    & > #message-input {
+      @include gray-fill-input;
+    }
   }
 }
 

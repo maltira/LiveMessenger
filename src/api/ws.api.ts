@@ -47,7 +47,6 @@ class WSStatusService {
               reply_to_message: msg.reply_to_message,
               edited_at: null,
             }
-            console.log("new_message", message)
             chatStore.addMessage(msg.chat_id, message)
             break
           default:
