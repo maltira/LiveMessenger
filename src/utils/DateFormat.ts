@@ -13,7 +13,6 @@ export function timeAgo(date: Date | string, now: Date = new Date()): string {
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHour = Math.floor(diffMin / 60);
-  // const diffDay = Math.floor(diffHour / 24);
 
   // До минуты
   if (diffSec < 60) {
@@ -90,4 +89,46 @@ export function formatBirthDate(dateStr: string | Date): string {
   } catch {
     return '';
   }
+}
+
+export function formatMessageDate(dateStr: string | Date): string {
+  const msgDate = new Date(dateStr);
+
+  if (Number.isNaN(msgDate.getTime())) {
+    return 'null';
+  }
+
+  const now = new Date();
+
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msgDateStart = new Date(msgDate.getFullYear(), msgDate.getMonth(), msgDate.getDate());
+
+  const diffMs = todayStart.getTime() - msgDateStart.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return msgDate.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  if (diffDays >= 1 && diffDays <= 6) {
+    const shortDays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'] as const;
+    return shortDays[msgDate.getDay()]!;
+  }
+
+  if (msgDate.getFullYear() === now.getFullYear()) {
+    return msgDate.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+    });
+  }
+
+  return msgDate.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+  });
 }

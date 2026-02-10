@@ -7,6 +7,7 @@ import { computed, onMounted, ref } from 'vue'
 import Skeleton from '@/components/UI/Skeleton.vue'
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { type ChatExtended, useChatStore } from '@/stores/chats.store.ts'
+import { formatMessageDate } from '@/utils/DateFormat.ts'
 
 interface Props {
   chat: ChatExtended
@@ -33,6 +34,13 @@ const avatarLoading = ref(true)
 // ? FUNCTIONS
 const lastMessage = computed(() => {
   return props.chat.lastMessage?.msg_content || 'Нет сообщений'
+})
+const lastMessageTime = computed(() => {
+  const t = props.chat.messages.find(m => m.id === props.chat.lastMessage?.msg_id)?.created_at
+  if (t) {
+    return formatMessageDate(t)
+  }
+  else return "null"
 })
 const isOnline = computed(() => {
   if (props.chat.type === 'private' && profile.value && !isBlockedMeBy.value(profile.value.id)) {
@@ -89,6 +97,7 @@ onMounted(async () => {
     <div class="profile-data">
       <p class="chat_name">{{ chat.type === 'group' ? chat.name : profile!.full_name }}</p>
       <p class="last_message">{{ lastMessage }}</p>
+      <p class="message-time">{{ lastMessageTime }}</p>
     </div>
   </div>
 </template>
@@ -156,6 +165,7 @@ onMounted(async () => {
   }
 }
 .profile-data {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -170,6 +180,15 @@ onMounted(async () => {
     @include tag-text;
     line-height: 120%;
     opacity: 0.6;
+  }
+  & > .message-time {
+    @include tag-text;
+    position: absolute;
+    right: 0;
+
+    line-height: 120%;
+    opacity: 0.6;
+    text-align: end;
   }
 }
 </style>
