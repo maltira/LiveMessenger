@@ -61,7 +61,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="profile" class="profile-element" @click="setActiveChat(chat.id, me!.id)">
+  <div
+    v-if="profile"
+    class="profile-element"
+    @click="setActiveChat(chat.id, me!.id)"
+    :class="{active: chatStore.activeChat && chatStore.activeChat.id === chat.id}"
+  >
     <div class="avatar">
       <Skeleton v-if="avatarLoading" class="img-avatar" border-radius="99px" style="opacity: 0.6" />
       <div v-if="isBlockedMeBy(profile.id) && chat.type === 'private'" class="img-avatar blocked">
@@ -99,10 +104,14 @@ onMounted(async () => {
   background: transparent;
 
   cursor: pointer;
-  transition: background-color 1ms;
+  transition: background-color 150ms;
 
   &:hover {
     background: rgba($gray-primary, 0.5);
+  }
+
+  &.active {
+    background: $gray-primary;
   }
 }
 .avatar {

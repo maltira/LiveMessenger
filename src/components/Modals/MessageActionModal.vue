@@ -65,6 +65,10 @@ const deleteMessage = async () => {
     handleClose()
   }
 }
+const copyMessage = () => {
+  navigator.clipboard.writeText(props.msg.content);
+  handleClose()
+}
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
@@ -94,8 +98,12 @@ onUnmounted(() => {
       <img src="/icons/bx_share.svg" alt="reply" />
       <p>Ответить</p>
     </div>
+    <div class="action-item" @click="copyMessage">
+      <img src="/icons/copy.svg" alt="copy" />
+      <p>Копировать</p>
+    </div>
     <div v-if="profileStore.me && profileStore.me.id === msg.user_id" class="action-item" @click="deleteMessage">
-      <img src="/icons/delete-outline.svg" alt="reply" />
+      <img src="/icons/delete-outline.svg" alt="delete" />
       <p class="red">Удалить</p>
     </div>
   </div>

@@ -72,7 +72,7 @@ const closeChat = () => {
 const toggleActionModal = (msg: Message, event: MouseEvent) => {
   if (msgAction.value) msgAction.value = null
 
-  pickerPosition.value = {x: event.clientX - 180, y: event.clientY + 20}
+  pickerPosition.value = {x: event.clientX - 180, y: event.clientY + 10}
   msgAction.value = msg
 }
 
@@ -172,7 +172,7 @@ onUnmounted(() => {
         <p class="message-time" v-if="m.user_id === me!.id">{{ formatTimeOnly(m.created_at) }}</p>
 
         <p class="message-content" @contextmenu.prevent="toggleActionModal(m, $event)">
-          <span v-if="m.reply_to_message">
+          <span v-if="m.reply_to_message" :class="{blue: m.user_id !== me!.id}">
             {{ activeChat.messages.find(msg => msg.id === m.reply_to_message)?.content || "Не найдено" }}
           </span>
           {{ m.content }}
@@ -412,8 +412,9 @@ onUnmounted(() => {
 
         cursor: pointer;
 
-        &:hover {
-          background: rgba($white-primary, 0.2);
+        &.blue {
+          background: rgba($black-primary, 0.03);
+          border-left-color: rgba($black-primary, 0.4);
         }
       }
     }
