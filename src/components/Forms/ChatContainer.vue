@@ -76,6 +76,22 @@ const toggleActionModal = (msg: Message, event: MouseEvent) => {
   msgAction.value = msg
 }
 
+const scrollToMessage = (messageId: string) => {
+  const element = document.getElementById(`msg-${messageId}`)
+
+  if (element) {
+    element.scrollIntoView({
+      behavior: 'smooth',     // плавная прокрутка (самое важное)
+      block: 'center',        // центрируем сообщение по вертикали
+    })
+
+    element.classList.add('highlight-message')
+    setTimeout(() => {
+      element.classList.remove('highlight-message')
+    }, 250)
+  }
+}
+
 const sendMessage = async () => {
   if (activeChat.value && activeChat.value.inputValue && activeChat.value.inputValue.trim().length > 0) {
     const msg: MsgCreateRequest = {
@@ -167,6 +183,7 @@ onUnmounted(() => {
         v-for="m in activeChat.messages"
         class="message-item"
         :class="{ me: m.user_id === me!.id }"
+        :id="`msg-${m.id}`"
       >
 
         <img v-if="m.user_id === me!.id && !m.read_by.includes(profile.id)" class="read-check" src="/icons/check-fill-blue.svg" alt="read-check">
@@ -175,7 +192,7 @@ onUnmounted(() => {
         <p class="message-time" v-if="m.user_id === me!.id">{{ formatTimeOnly(m.created_at) }}</p>
 
         <p class="message-content" @contextmenu.prevent="toggleActionModal(m, $event)">
-          <span v-if="m.reply_to_message" :class="{blue: m.user_id !== me!.id}">
+          <span v-if="m.reply_to_message" :class="{blue: m.user_id !== me!.id}" @click="scrollToMessage(m.reply_to_message)">
             {{ activeChat.messages.find(msg => msg.id === m.reply_to_message)?.content || "Не найдено" }}
           </span>
           {{ m.content }}
@@ -381,6 +398,8 @@ onUnmounted(() => {
     width: 100%;
     gap: 6px;
 
+    background: transparent;
+
     & > .read-check {
       width: 14px;
       height: 14px;
@@ -567,6 +586,16 @@ onUnmounted(() => {
     @include input-text;
     opacity: 0.6;
     text-align: center;
+  }
+}
+
+.highlight-message {
+  transition: 250ms;
+  transform: translateX(5px);
+  opacity: 0.8;
+
+  &.me {
+    transform: translateX(-5px);
   }
 }
 </style>

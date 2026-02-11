@@ -30,7 +30,7 @@ class WSStatusService {
 
             // обновляем только существующие записи в кеше (а новые подтягиваем по надобности)
             if (user_id in onlineStore.onlineProfiles) {
-              // console.log("Получено событие", user_id, "(online:", is_online, ", last_seen:", last_seen, ")")
+              console.log("Получено событие", user_id, "(online:", is_online, ", last_seen:", last_seen, ")")
               onlineStore.onlineProfiles[user_id] = {
                 online: is_online,
                 last_seen: last_seen ? new Date(last_seen) : null,

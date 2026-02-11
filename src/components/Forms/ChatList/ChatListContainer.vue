@@ -24,7 +24,7 @@ const { selectedProfile } = storeToRefs(profileStore)
   display: flex;
   flex-direction: column;
 
-  width: 462px;
+  width: 400px;
   flex-shrink: 0;
   height: 100%;
 
