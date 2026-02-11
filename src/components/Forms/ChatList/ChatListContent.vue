@@ -89,7 +89,7 @@ onMounted(async() => {
 
   <div v-if="search" class="search-data">
     <div v-if="isLoading" class="found-data skeleton">
-      <Skeleton v-for="i in 5" :key="i" width="414px" height="64px"/>
+      <Skeleton v-for="i in 5" :key="i" width="352px" height="64px"/>
     </div>
     <div v-else-if="findingProfiles.length > 0" class="found-data">
       <ProfileItemCard v-for="p in findingProfiles" :profile="p" @click="selectedProfile = p"/>

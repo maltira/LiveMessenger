@@ -8,7 +8,7 @@ import { formatTimeOnly, timeAgo } from '@/utils/DateFormat.ts'
 import { useChatStore } from '@/stores/chats.store.ts'
 import type { Profile } from '@/types/profile/profile.model.ts'
 import { useNotification } from '@/composables/useNotifications.ts'
-import type { MsgCreateRequest } from '@/types/chat/dto/message.dto.ts'
+import type { MsgCreateRequest, MsgUpdateRequest } from '@/types/chat/dto/message.dto.ts'
 import MessageActionModal from '@/components/Modals/MessageActionModal.vue'
 import type { Message } from '@/types/chat/message.model.ts'
 
@@ -24,7 +24,12 @@ const blockStore = useBlockStore()
 const { isBlockedMeBy } = storeToRefs(blockStore)
 
 const chatStore = useChatStore()
-const { activeChat, activeChatId, isLoading: chatLoading, error: chatError } = storeToRefs(chatStore)
+const {
+  activeChat,
+  activeChatId,
+  isLoading: chatLoading,
+  error: chatError,
+} = storeToRefs(chatStore)
 
 // ? REFS
 const pickerPosition = ref({ x: 0, y: 0 })
@@ -33,14 +38,15 @@ const profile = ref<Profile | null>(null)
 const forceUpdate = ref(0)
 const aChat = ref<HTMLElement | null>(null)
 let intervalId: number | null = null
+const editMode = ref<Message | null>(null)
 
 // ? FUNCTIONS
 const chatAvatar = computed(() => {
   if (activeChat.value) {
     if (activeChat.value.type === 'private' && profile.value) {
-      return "/img/avatars/" + profile.value.avatar_url
+      return '/img/avatars/' + profile.value.avatar_url
     }
-    return "/img/avatars/" + activeChat.value.avatar_url || '/img/avatars/avatar-violet.png'
+    return '/img/avatars/' + activeChat.value.avatar_url || '/img/avatars/avatar-violet.png'
   }
   return '/img/avatars/avatar-violet.png'
 })
@@ -62,8 +68,8 @@ const computeStatus = computed(() => {
 })
 const closeChat = () => {
   if (aChat.value) {
-    aChat.value.style.padding = "12px 30px 24px 30px"
-    aChat.value.style.opacity = "0"
+    aChat.value.style.padding = '12px 30px 24px 30px'
+    aChat.value.style.opacity = '0'
   }
   setTimeout(() => {
     chatStore.clearActiveChat()
@@ -72,17 +78,16 @@ const closeChat = () => {
 const toggleActionModal = (msg: Message, event: MouseEvent) => {
   if (msgAction.value) msgAction.value = null
 
-  pickerPosition.value = {x: event.clientX - 180, y: event.clientY + 10}
+  pickerPosition.value = { x: event.clientX - 180, y: event.clientY + 10 }
   msgAction.value = msg
 }
-
 const scrollToMessage = (messageId: string) => {
   const element = document.getElementById(`msg-${messageId}`)
 
   if (element) {
     element.scrollIntoView({
-      behavior: 'smooth',     // плавная прокрутка (самое важное)
-      block: 'center',        // центрируем сообщение по вертикали
+      behavior: 'smooth', // плавная прокрутка (самое важное)
+      block: 'center', // центрируем сообщение по вертикали
     })
 
     element.classList.add('highlight-message')
@@ -91,19 +96,22 @@ const scrollToMessage = (messageId: string) => {
     }, 250)
   }
 }
-
 const sendMessage = async () => {
-  if (activeChat.value && activeChat.value.inputValue && activeChat.value.inputValue.trim().length > 0) {
+  if (
+    activeChat.value &&
+    activeChat.value.inputValue &&
+    activeChat.value.inputValue.trim().length > 0
+  ) {
     const msg: MsgCreateRequest = {
       content: activeChat.value.inputValue,
       type: 'text',
-      reply_to_message: activeChat.value.replyTo?.id || null
+      reply_to_message: activeChat.value.replyTo?.id || null,
     }
 
     await chatStore.SendMessage(activeChatId.value, msg)
 
     if (chatError.value) {
-      infoNotification("🚫 Сообщение не отправлено: " + chatError.value)
+      infoNotification('🚫 Сообщение не отправлено: ' + chatError.value)
       return
     }
     activeChat.value.inputValue = ''
@@ -114,28 +122,69 @@ const fetchProfileName = computed(() => {
   if (activeChat.value && activeChat.value.replyTo) {
     const id = activeChat.value.replyTo!.user_id
     if (id) {
-      if (id === me.value!.id) return "Ваше сообщение"
+      if (id === me.value!.id) return 'Вы'
       return profile.value?.full_name || profile.value?.username
-    }
-    else return "Система"
+    } else return 'Система'
   }
-  return "Неизвестно"
+  return 'Неизвестно'
+})
+
+const goToEdit = (msg: Message) => {
+  editMode.value = msg
+
+  if (activeChat.value?.replyTo) {
+    setTimeout(() => {
+      const replyContainer = document.getElementById("reply-to-message")
+      if (replyContainer) {
+        replyContainer.style.opacity = "1"
+        replyContainer.style.transform = "scale(1)"
+      }
+    }, 1)
+  }
+}
+const editMessage = async () => {
+  if (canEdit) {
+    const updated: MsgUpdateRequest = {
+      content: activeChat.value!.inputValue || "",
+      reply_to_message: activeChat.value!.replyTo?.id || null
+    }
+
+    await chatStore.EditMessage(activeChat.value!.id, editMode.value!.id, updated)
+
+    if (chatError.value) {
+      infoNotification("🚫 Ошибка редактирования: " + chatError.value)
+    }
+    cancelEdit()
+  }
+}
+const cancelEdit = () => {
+  editMode.value = null
+  activeChat.value!.inputValue = undefined
+  activeChat.value!.replyTo = undefined
+}
+const canEdit = computed(() => {
+  return activeChat.value && editMode.value &&
+    activeChat.value.inputValue &&
+    (activeChat.value.inputValue !== editMode.value.content ||
+      activeChat.value.replyTo && activeChat.value.replyTo.id !== editMode.value.reply_to_message ||
+        activeChat.value.replyTo === undefined && editMode.value.reply_to_message !== null
+    )
 })
 
 watch(activeChatId, async () => {
   if (activeChat.value && activeChat.value.type === 'private') {
-    const interlocutor = activeChat.value.participants.find(p => p.user_id !== me.value!.id)
+    const interlocutor = activeChat.value.participants.find((p) => p.user_id !== me.value!.id)
     if (interlocutor) {
       profile.value = await FetchProfile(interlocutor.user_id)
 
       if (profileError.value) {
-        infoNotification("🚫 Ошибка загрузки пользователя: " + profileError.value)
+        infoNotification('🚫 Ошибка загрузки пользователя: ' + profileError.value)
       } else if (profile.value) {
         setTimeout(() => {
-          aChat.value = document.getElementById("active-chat")
+          aChat.value = document.getElementById('active-chat')
           if (aChat.value) {
-            aChat.value.style.padding = "12px 24px 24px 24px"
-            aChat.value.style.opacity = "1"
+            aChat.value.style.padding = '12px 24px 24px 24px'
+            aChat.value.style.opacity = '1'
           }
         }, 1)
       }
@@ -157,7 +206,7 @@ onUnmounted(() => {
 <template>
   <div v-if="activeChat && profile" id="active-chat">
     <div class="profile-element">
-      <img class="close-chat" @click="closeChat" src="/icons/arrow.svg" alt="arrow">
+      <img class="close-chat" @click="closeChat" src="/icons/arrow.svg" alt="arrow" />
       <div class="avatar" @click="profileStore.setActiveProfile(profile)">
         <div v-if="isBlockedMeBy(profile.id)" class="img-avatar blocked">
           {{ profile.full_name[0] ? profile.full_name[0].toUpperCase() : 'Н' }}
@@ -165,7 +214,9 @@ onUnmounted(() => {
         <img v-else class="img-avatar" :src="chatAvatar" alt="avatar" />
       </div>
       <div class="profile-data">
-        <p class="full_name" @click="profileStore.setActiveProfile(profile)">{{ profile.full_name }}</p>
+        <p class="full_name" @click="profileStore.setActiveProfile(profile)">
+          {{ profile.full_name }}
+        </p>
         <p class="status">{{ computeStatus }}</p>
       </div>
       <div class="buttons">
@@ -185,15 +236,31 @@ onUnmounted(() => {
         :class="{ me: m.user_id === me!.id }"
         :id="`msg-${m.id}`"
       >
-
-        <img v-if="m.user_id === me!.id && !m.read_by.includes(profile.id)" class="read-check" src="/icons/check-fill-blue.svg" alt="read-check">
-        <img v-else-if="m.user_id === me!.id && m.read_by.includes(profile.id)" class="read-check" src="/icons/check-double-fill-blue.svg" alt="read-check">
+        <img
+          v-if="m.user_id === me!.id && !m.read_by.includes(profile.id)"
+          class="read-check"
+          src="/icons/check-fill-blue.svg"
+          alt="read-check"
+        />
+        <img
+          v-else-if="m.user_id === me!.id && m.read_by.includes(profile.id)"
+          class="read-check"
+          src="/icons/check-double-fill-blue.svg"
+          alt="read-check"
+        />
 
         <p class="message-time" v-if="m.user_id === me!.id">{{ formatTimeOnly(m.created_at) }}</p>
 
         <p class="message-content" @contextmenu.prevent="toggleActionModal(m, $event)">
-          <span v-if="m.reply_to_message" :class="{blue: m.user_id !== me!.id}" @click="scrollToMessage(m.reply_to_message)">
-            {{ activeChat.messages.find(msg => msg.id === m.reply_to_message)?.content || "Не найдено" }}
+          <span
+            v-if="m.reply_to_message"
+            :class="{ blue: m.user_id !== me!.id }"
+            @click="scrollToMessage(m.reply_to_message)"
+          >
+            {{
+              activeChat.messages.find((msg) => msg.id === m.reply_to_message)?.content ||
+              'Не найдено'
+            }}
           </span>
           {{ m.content }}
         </p>
@@ -207,8 +274,8 @@ onUnmounted(() => {
     </div>
 
     <div class="input-fields">
-      <div class="icon-btn">
-        <img src="/icons/add.svg" alt="add" />
+      <div class="icon-btn" @click="editMode ? cancelEdit() : null">
+        <img src="/icons/add.svg" :style="{transform: editMode ? 'rotate(-45deg)' : ''}" alt="add" />
       </div>
       <div class="message-input-container">
         <div id="reply-to-message" class="reply-to-message" v-if="activeChat && activeChat.replyTo">
@@ -216,7 +283,12 @@ onUnmounted(() => {
             <p class="user">{{ fetchProfileName }}:</p>
             <p class="msg-content">{{ activeChat.replyTo!.content }}</p>
           </div>
-          <img class="cancel-reply" @click="activeChat.replyTo = undefined" src="/icons/close.svg" alt="cancel">
+          <img
+            class="cancel-reply"
+            @click="activeChat.replyTo = undefined"
+            src="/icons/close.svg"
+            alt="cancel"
+          />
         </div>
         <div id="message-input" class="message-input" :class="{ active: activeChat.inputValue }">
           <input
@@ -225,7 +297,7 @@ onUnmounted(() => {
             autocomplete="off"
             v-model="activeChat.inputValue"
             placeholder="Введите сообщение"
-            @keyup.enter="sendMessage"
+            @keyup.enter="editMode ? editMessage() : sendMessage()"
           />
         </div>
       </div>
@@ -233,8 +305,12 @@ onUnmounted(() => {
       <div class="icon-btn">
         <img src="/icons/emoji-outline.svg" alt="emoji" />
       </div>
-      <div class="icon-btn send-message-btn" @click="sendMessage" :class="{ disabled: !activeChat.inputValue }">
-        <img src="/icons/send-filled-white.svg" alt="send" />
+      <div
+        class="icon-btn send-message-btn"
+        @click="editMode ? editMessage() : sendMessage()"
+        :class="{ disabled: !editMode && !activeChat.inputValue || editMode && !canEdit }"
+      >
+        <img :src="editMode ? '/icons/check-white.svg' : '/icons/send-filled-white.svg'" alt="send" />
       </div>
     </div>
   </div>
@@ -249,6 +325,8 @@ onUnmounted(() => {
     :pos_y="pickerPosition.y"
     :pos_x="pickerPosition.x"
     @close="msgAction = null"
+    @edit="goToEdit"
+    @reply="cancelEdit"
   />
 </template>
 
@@ -387,7 +465,7 @@ onUnmounted(() => {
   height: 100%;
 
   overflow-y: auto;
-  scrollbar-color: rgba(0,0,0,0.05) transparent !important;
+  scrollbar-color: rgba(0, 0, 0, 0.05) transparent !important;
   scrollbar-width: none;
 
   & > .message-item {
@@ -469,7 +547,7 @@ onUnmounted(() => {
     @include gray-icon-btn;
 
     &.send-message-btn {
-      background: $black-primary !important;
+      background: $blue-color !important;
       border: none !important;
 
       &.disabled {
@@ -480,7 +558,7 @@ onUnmounted(() => {
       }
     }
   }
-  & > .message-input-container{
+  & > .message-input-container {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -501,7 +579,7 @@ onUnmounted(() => {
       opacity: 0;
       transform: scale(0.9);
       transition: 50ms;
-      
+
       & > .content {
         display: flex;
         align-items: center;

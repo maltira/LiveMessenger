@@ -14,6 +14,8 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
+  edit: [Message]
+  reply: []
 }>()
 
 // ? STORE
@@ -46,6 +48,7 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 const replyToMessage = () => {
+  emit("reply")
   if (activeChat.value) {
     activeChat.value.replyTo = props.msg
     handleClose()
@@ -68,6 +71,17 @@ const deleteMessage = async () => {
 const copyMessage = () => {
   navigator.clipboard.writeText(props.msg.content);
   handleClose()
+}
+const editMessage = () => {
+  const chat = chatStore.chats.get(props.msg.chat_id)
+  if (chat && chat.messages.some(m => m.id === props.msg.id)) {
+    chat.inputValue = props.msg.content
+    chat.replyTo = chat.messages.find(m => m.id === props.msg.reply_to_message)
+    chatStore.chats.set(props.msg.chat_id, chat)
+
+    emit("edit", props.msg)
+    handleClose()
+  }
 }
 
 onMounted(() => {
@@ -97,6 +111,10 @@ onUnmounted(() => {
     <div class="action-item" @click="replyToMessage">
       <img src="/icons/bx_share.svg" alt="reply" />
       <p>Ответить</p>
+    </div>
+    <div v-if="profileStore.me && profileStore.me.id === msg.user_id" class="action-item" @click="editMessage">
+      <img src="/icons/edit.svg" alt="edit" />
+      <p>Редактировать</p>
     </div>
     <div class="action-item" @click="copyMessage">
       <img src="/icons/copy.svg" alt="copy" />
