@@ -168,7 +168,10 @@ onUnmounted(() => {
         class="message-item"
         :class="{ me: m.user_id === me!.id }"
       >
-        <img v-if="m.user_id === me!.id" class="read-check" src="/icons/check-fill-blue.svg" alt="read-check">
+
+        <img v-if="m.user_id === me!.id && !m.read_by.includes(profile.id)" class="read-check" src="/icons/check-fill-blue.svg" alt="read-check">
+        <img v-else-if="m.user_id === me!.id && m.read_by.includes(profile.id)" class="read-check" src="/icons/check-double-fill-blue.svg" alt="read-check">
+
         <p class="message-time" v-if="m.user_id === me!.id">{{ formatTimeOnly(m.created_at) }}</p>
 
         <p class="message-content" @contextmenu.prevent="toggleActionModal(m, $event)">

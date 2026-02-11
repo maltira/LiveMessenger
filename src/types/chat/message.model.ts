@@ -6,6 +6,7 @@ export interface Message {
   content: string;
   type: "text" | "image" | "video" | "file" | "system";
   reply_to_message: string | null;
+  read_by: string[];
 
   created_at: Date;
   edited_at: Date | null;

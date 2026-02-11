@@ -13,11 +13,11 @@ import type {
 } from '@/types/chat/dto/message.dto.ts'
 import { messageService } from '@/api/chat/message.api.ts'
 import { participantService } from '@/api/chat/participant.api.ts'
+import { WSStatus } from '@/api/ws.api.ts'
 
 export interface ChatExtended extends Chat {
   messages: Message[]
   participants: Participant[]
-  unread: number
   inputValue?: string
   replyTo?: Message
   lastMessage?: { msg_id: string; msg_content: string }
@@ -37,6 +37,10 @@ export const useChatStore = defineStore('chats', {
     activeChat: (state): ChatExtended | null => state.chats.get(state.activeChatId) || null,
     isActiveChat: (state) => !!state.activeChatId,
     hasPrivate: (state) => (id: string) => state.privateChats.has(id),
+    unreadMessages: (state) =>
+      (chat_id: string, me_id: string):Message[] =>
+        state.chats.get(chat_id)?.messages.filter(
+          m => m.user_id !== me_id && !(m.read_by.includes(me_id))) || [],
   },
   actions: {
     addMessage(chat_id: string, msg: Message) {
@@ -45,7 +49,6 @@ export const useChatStore = defineStore('chats', {
         if (!chat.messages.some(m => m.id === msg.id)) {
           chat.messages.unshift(msg)
         }
-        chat.unread += 1
         chat.lastMessage = { msg_id: msg.id, msg_content: msg.content }
         this.chats.set(chat_id, chat)
       }
@@ -61,9 +64,24 @@ export const useChatStore = defineStore('chats', {
         if (chat.participants.length === 0) {
           await this.FetchParticipants(chat_id, me_id)
         }
-        chat.unread = 0
       }
       this.activeChatId = chat_id
+
+      if (this.activeChat && this.unreadMessages(chat_id, me_id).length > 0) {
+        const msgIds: string[] = this.unreadMessages(chat_id, me_id).map((m) => m.id)
+        console.log("unread", this.unreadMessages(chat_id, me_id))
+        const res = WSStatus.sendRead(chat_id, msgIds)
+        if (res) {
+          for (const msgId of msgIds) {
+            const i = this.activeChat.messages.findIndex(m => m.id === msgId)
+            if (i !== -1 && this.activeChat.messages[i]) {
+              if (this.activeChat.messages[i].read_by === null) this.activeChat.messages[i].read_by = []
+              this.activeChat.messages[i].read_by.push(me_id)
+              this.chats.set(chat_id, this.activeChat)
+            }
+          }
+        }
+      }
     },
     clearActiveChat() {
       this.activeChatId = ''
@@ -85,7 +103,6 @@ export const useChatStore = defineStore('chats', {
             ...chat,
             messages: [],
             participants: [],
-            unread: 0,
           })
         })
       }
@@ -113,7 +130,6 @@ export const useChatStore = defineStore('chats', {
           ...response,
           messages: [],
           participants: [],
-          unread: 0,
         })
         this.privateChats.add(user_id)
 
@@ -140,7 +156,6 @@ export const useChatStore = defineStore('chats', {
           ...response,
           messages: [],
           participants: [],
-          unread: 0,
         })
 
         return response
@@ -196,6 +211,9 @@ export const useChatStore = defineStore('chats', {
         }
         const chat = this.chats.get(chat_id)
         if (chat) {
+          for (let m of response.messages) {
+            if (m.read_by === null) m.read_by = []
+          }
           chat.messages = [...chat.messages, ...response.messages]
           this.chats.set(chat_id, chat)
         }

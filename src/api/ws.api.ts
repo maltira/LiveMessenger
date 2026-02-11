@@ -2,6 +2,7 @@ import { useBlockStore } from '@/stores/block.store.ts'
 import { useOnlineStore } from '@/stores/online.store.ts'
 import { useChatStore } from '@/stores/chats.store.ts'
 import type { Message } from '@/types/chat/message.model.ts'
+import { useProfileStore } from '@/stores/profile.store.ts'
 
 class WSStatusService {
   private wsUrl = import.meta.env.VITE_WS_API_URL
@@ -18,6 +19,7 @@ class WSStatusService {
     this.socket.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data)
+        const chatStore = useChatStore()
         switch (msg.event_type) {
           case "block_update":
             useBlockStore().blockedMeBy[msg.blocker_id] = msg.is_blocked
@@ -36,7 +38,7 @@ class WSStatusService {
             }
             break
           case "new_message":
-            const chatStore = useChatStore()
+            const profileStore = useProfileStore()
             const message: Message = {
               id: msg.id,
               chat_id: msg.chat_id,
@@ -45,9 +47,25 @@ class WSStatusService {
               type: msg.type,
               created_at: msg.created_at,
               reply_to_message: msg.reply_to_message,
+              read_by: [],
               edited_at: null,
             }
+            if (chatStore.activeChatId === msg.chat_id && profileStore.me) {
+              this.sendRead(msg.chat_id, [msg.id])
+              message.read_by.push(profileStore.me.id)
+            }
             chatStore.addMessage(msg.chat_id, message)
+            break
+          case "read_update":
+            console.log(`Пользователь ${msg.user_id} прочитал сообщения:`, msg.message_ids)
+            const chat = chatStore.chats.get(msg.chat_id)
+            if (chat) {
+              for (let m of chat.messages) {
+                if (msg.message_ids.includes(m.id))
+                  m.read_by.push(msg.user_id)
+              }
+              chatStore.chats.set(msg.chat_id, chat)
+            }
             break
           default:
             console.debug('[WS] Unknown event:', msg.event_type)
@@ -64,6 +82,18 @@ class WSStatusService {
     this.socket.onclose = () => {
       this.disconnect()
     }
+  }
+
+  sendRead(chat_id: string, messageIds: string[]): boolean {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({
+        type: "read",
+        chat_id: chat_id,
+        message_ids: messageIds,
+      }))
+      return true
+    }
+    return false
   }
 
   disconnect() {

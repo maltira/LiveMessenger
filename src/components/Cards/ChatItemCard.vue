@@ -98,6 +98,9 @@ onMounted(async () => {
       <p class="chat_name">{{ chat.type === 'group' ? chat.name : profile!.full_name }}</p>
       <p class="last_message">{{ lastMessage }}</p>
       <p class="message-time">{{ lastMessageTime }}</p>
+      <div class="counter-unread" v-if="chatStore.unreadMessages(chat.id, me!.id).length > 0">
+        {{ chatStore.unreadMessages(chat.id, me!.id).length}}
+      </div>
     </div>
   </div>
 </template>
@@ -189,6 +192,26 @@ onMounted(async () => {
     line-height: 120%;
     opacity: 0.6;
     text-align: end;
+  }
+  & > .counter-unread {
+    @include tag-text;
+    line-height: 120%;
+    font-size: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: absolute;
+    right: 0;
+    top: 18px;
+
+    color: $white-primary;
+    background: $blue-color;
+    border-radius: 99px;
+    width: 16px;
+    height: 16px;
+
   }
 }
 </style>
