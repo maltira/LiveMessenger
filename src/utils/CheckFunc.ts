@@ -16,13 +16,3 @@ export const checkAuth = async (to: RouteLocationNormalizedGeneric, from: RouteL
     next('/login')
   }
 }
-
-export const checkResetToken = (to: RouteLocationNormalizedGeneric, from: RouteLocationNormalizedLoadedGeneric, next: NavigationGuardNext) => {
-  console.log(document.cookie, document.cookie.includes("reset_token"))
-  if (document.cookie.includes("reset_token")) {
-    next()
-  }
-  else {
-    next("/")
-  }
-}

@@ -14,6 +14,7 @@ import type {
 import { messageService } from '@/api/chat/message.api.ts'
 import { participantService } from '@/api/chat/participant.api.ts'
 import { WSStatus } from '@/api/ws.api.ts'
+import router from '@/router'
 
 export interface ChatExtended extends Chat {
   messages: Message[]
@@ -66,10 +67,11 @@ export const useChatStore = defineStore('chats', {
         }
       }
       this.activeChatId = chat_id
-
+      await router.push(`/chat/${chat_id}`)
+    },
+    readMessages(chat_id: string, me_id: string) {
       if (this.activeChat && this.unreadMessages(chat_id, me_id).length > 0) {
         const msgIds: string[] = this.unreadMessages(chat_id, me_id).map((m) => m.id)
-        console.log("unread", this.unreadMessages(chat_id, me_id))
         const res = WSStatus.sendRead(chat_id, msgIds)
         if (res) {
           for (const msgId of msgIds) {
@@ -83,8 +85,9 @@ export const useChatStore = defineStore('chats', {
         }
       }
     },
-    clearActiveChat() {
+    async clearActiveChat() {
       this.activeChatId = ''
+      await router.push('/chat')
     },
 
     async FetchChats(): Promise<void> {

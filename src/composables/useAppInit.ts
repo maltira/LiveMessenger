@@ -43,7 +43,7 @@ export function useAppInit() {
           }
         }
 
-        await router.push('/')
+        await router.push('/chat')
       }
     }
     catch (error) {

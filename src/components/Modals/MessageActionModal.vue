@@ -24,7 +24,7 @@ const chatStore = useChatStore()
 const { activeChat } = storeToRefs(chatStore)
 const { DeleteMessage } = chatStore
 
-// ? REFS
+// ? FUNCTIONS
 const handleClose = () => {
   const actionModal = document.getElementById('message-action-modal')
   if (actionModal) {
@@ -59,6 +59,8 @@ const replyToMessage = () => {
         replyContainer.style.opacity = "1"
         replyContainer.style.transform = "scale(1)"
       }
+      const messageInput = document.getElementById("chat-message-input")
+      messageInput!.focus()
     }, 1)
   }
 }

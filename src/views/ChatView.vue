@@ -12,6 +12,11 @@ import type { MsgCreateRequest, MsgUpdateRequest } from '@/types/chat/dto/messag
 import MessageActionModal from '@/components/Modals/MessageActionModal.vue'
 import type { Message } from '@/types/chat/message.model.ts'
 
+interface Props {
+  id?: string
+}
+const props = defineProps<Props>()
+
 const { infoNotification } = useNotification()
 
 const profileStore = useProfileStore()
@@ -27,7 +32,6 @@ const chatStore = useChatStore()
 const {
   activeChat,
   activeChatId,
-  isLoading: chatLoading,
   error: chatError,
 } = storeToRefs(chatStore)
 
@@ -167,7 +171,7 @@ const canEdit = computed(() => {
     activeChat.value.inputValue &&
     (activeChat.value.inputValue !== editMode.value.content ||
       activeChat.value.replyTo && activeChat.value.replyTo.id !== editMode.value.reply_to_message ||
-        activeChat.value.replyTo === undefined && editMode.value.reply_to_message !== null
+      activeChat.value.replyTo === undefined && editMode.value.reply_to_message !== null
     )
 })
 
