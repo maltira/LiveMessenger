@@ -95,6 +95,8 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .login-page {
+  position: relative;
+
   width: 100%;
   height: 100vh;
 

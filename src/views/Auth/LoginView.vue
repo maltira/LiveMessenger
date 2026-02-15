@@ -35,7 +35,7 @@ const goToLogin = async () => {
 }
 const okAction = () => {
   infoNotification("👋 Добро пожаловать в Лайв!")
-  router.push('/')
+  router.push('/chat')
 }
 </script>
 
@@ -102,6 +102,7 @@ const okAction = () => {
 
 <style scoped lang="scss">
 .login-page {
+  position: relative;
   width: 100%;
   height: 100vh;
 

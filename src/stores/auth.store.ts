@@ -3,15 +3,14 @@ import type {
   AuthRequest,
   OTPSentResponse,
   ResetPasswordRequest,
-  TempTokenResponse,
   VerifyOTPRequest,
 } from '@/types/auth/auth.dto.ts'
 import type { ErrorResponse, MessageResponse } from '@/types/error.dto.ts'
 import { authService } from '@/api/auth/auth.api.ts'
-import { isErrorResponse, isMessageResponse } from '@/utils/ResponseType.ts'
+import { isErrorResponse } from '@/utils/ResponseType.ts'
 import type { User } from '@/types/auth/auth.model.ts'
 import { useProfileStore } from '@/stores/profile.store.ts'
-import { WSStatus } from '@/api/profile/ws.api.ts'
+import { WSStatus } from '@/api/ws.api.ts'
 
 
 export const useAuthStore = defineStore('auth', {

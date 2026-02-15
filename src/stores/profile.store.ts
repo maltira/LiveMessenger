@@ -18,6 +18,11 @@ export const useProfileStore = defineStore('profile', {
   }),
 
   actions: {
+    setActiveProfile(profile: Profile) {
+      if (this.selectedProfile && profile.id === this.selectedProfile.id) return
+      this.selectedProfile = profile
+    },
+
     async FetchMe(): Promise<Profile | null> {
       try {
         this.isLoading = true
@@ -30,6 +35,29 @@ export const useProfileStore = defineStore('profile', {
         }
 
         this.me = response
+        return response
+      } catch (error) {
+        this.error = { code: 500, error: error!.toString() }
+        return null
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async FetchProfile(id: string): Promise<Profile | null> {
+      if (this.findingProfiles.some(profile => profile.id === id)) {
+        return this.findingProfiles.find(p => p.id === id) || null
+      }
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const response: Profile | ErrorResponse = await profileService.FetchProfile(id)
+        if (isErrorResponse(response)) {
+          this.error = response
+          return null
+        }
+
         return response
       } catch (error) {
         this.error = { code: 500, error: error!.toString() }

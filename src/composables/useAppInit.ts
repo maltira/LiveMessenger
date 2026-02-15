@@ -2,14 +2,20 @@ import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.store.ts'
 import router from '@/router'
 import { useProfileStore } from '@/stores/profile.store.ts'
-import { WSStatus } from '@/api/profile/ws.api.ts'
+import { WSStatus } from '@/api/ws.api.ts'
 import { useBlockStore } from '@/stores/block.store.ts'
+import { useChatStore } from '@/stores/chats.store.ts'
+import { useNotification } from '@/composables/useNotifications.ts'
+import { useOnlineStore } from '@/stores/online.store.ts'
 
 export function useAppInit() {
   const isAppReady = ref(false)
   const authStore = useAuthStore()
   const profileStore = useProfileStore()
   const blockStore = useBlockStore()
+  const chatStore = useChatStore()
+  const onlineStore = useOnlineStore()
+  const { infoNotification } = useNotification()
   
   const initApp = async (): Promise<void> => {
     try {
@@ -19,7 +25,25 @@ export function useAppInit() {
         WSStatus.connect()
         await profileStore.FetchMe()
         await blockStore.FetchAll()
-        await router.push('/')
+
+        await chatStore.FetchChats()
+        if (chatStore.error) {
+          infoNotification("🚫 Ошибка загрузки чатов: " + chatStore.error)
+        } else {
+          for (const chat of chatStore.chatsList) {
+            await chatStore.FetchParticipants(chat.id, authStore.me!.id)
+            await chatStore.FetchMessages(chat.id)
+
+            if (chat.messages.length > 0 && chat.messages[0])
+              chat.lastMessage = {msg_id: chat.messages[0].id, msg_content: chat.messages[0].content}
+          }
+          for (const p of chatStore.privateChats) {
+            await blockStore.CheckIfBlockedMe(p)
+            await onlineStore.fetchProfileOnline(p)
+          }
+        }
+
+        await router.push('/chat')
       }
     }
     catch (error) {

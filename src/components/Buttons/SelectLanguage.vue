@@ -66,10 +66,10 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 #select-lang-btn {
-  position: fixed;
+  position: absolute;
 
-  top: 32px;
-  right: 50px;
+  top: 0;
+  right: 0;
 
   display: flex;
   justify-content: center;

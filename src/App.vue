@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
-import { onMounted } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import { computed, onMounted } from 'vue'
 import { useAppInit } from '@/composables/useAppInit.ts'
 import Notification from '@/components/UI/Notification.vue'
 import Skeleton from '@/components/UI/Skeleton.vue'
+import Sidebar from '@/components/Forms/ChatList/Sidebar.vue'
 
 const { initApp, isAppReady } = useAppInit()
+const route = useRoute()
+
+const hideSidebar = computed(() => {
+  return route.meta.hideSidebar
+})
 
 onMounted(async () => {
   await initApp()
@@ -13,20 +19,26 @@ onMounted(async () => {
 </script>
 
 <template>
-  <RouterView v-if="isAppReady"/>
-  <div v-else class="skeleton-loader">
-    <Skeleton width="462px" height="100%" border-radius="16px"/>
-    <Skeleton width="100%" height="100%" border-radius="16px"/>
+  <div v-if="isAppReady" class="home-view" :class="{ default: hideSidebar }">
+    <Sidebar v-if="!hideSidebar" />
+    <RouterView />
   </div>
+
+  <div v-else class="home-view skeleton">
+    <Skeleton width="462px" height="100%" border-radius="16px" style="flex-shrink: 0" />
+    <Skeleton width="100%" height="100%" border-radius="16px" />
+  </div>
+
   <Notification />
 </template>
 
 <style scoped lang="scss">
-.skeleton-loader {
+.home-view {
   display: flex;
+  width: 100%;
   gap: 6px;
   height: 100vh;
   padding: 32px;
-  background: #F6F6F6;
+  background: #f6f6f6;
 }
 </style>
