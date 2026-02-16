@@ -12,7 +12,7 @@ const emit = defineEmits<{
 
 // ? STORE
 const profileStore = useProfileStore()
-const { me, selectedProfile } = storeToRefs(profileStore)
+const { me, selectedProfile, isSettingsOpen } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { Logout } = authStore
 
@@ -48,6 +48,10 @@ const goToLogout = async () => {
 }
 const goToMyProfile = () => {
   selectedProfile.value = me.value
+  handleClose()
+}
+const goToSettings = () => {
+  isSettingsOpen.value = true
   handleClose()
 }
 
@@ -89,7 +93,7 @@ onUnmounted(() => {
       <p class="link-name">Тёмная тема</p>
     </div>
     <div class="divider"></div>
-    <div class="modal-link">
+    <div class="modal-link" @click="goToSettings">
       <img src="/icons/settings.svg" alt="settings">
       <p class="link-name">Настройки</p>
     </div>

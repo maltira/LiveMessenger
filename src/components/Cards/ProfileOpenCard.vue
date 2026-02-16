@@ -11,11 +11,6 @@ import { formatBirthDate, timeAgo } from '@/utils/DateFormat.ts'
 import { useOnlineStore } from '@/stores/online.store.ts'
 import { useChatStore } from '@/stores/chats.store.ts'
 
-// ? EMIT
-const emit = defineEmits<{
-  close: []
-}>()
-
 // ? STORE
 const { infoNotification } = useNotification()
 const profileStore = useProfileStore()
@@ -35,7 +30,7 @@ const onlineStore = useOnlineStore()
 const { onlineProfiles, isUserOnline, userLastSeen } = storeToRefs(onlineStore)
 const { fetchProfileOnline } = onlineStore
 const chatStore = useChatStore()
-const { error: chatError, isLoading: chatLoading } = storeToRefs(chatStore)
+const { error: chatError } = storeToRefs(chatStore)
 const { CreatePrivateChat } = chatStore
 
 // ? REF
@@ -83,7 +78,7 @@ const handleClose = () => {
     aProfile.value.style.opacity = "0";
   }
   setTimeout(() => {
-    emit('close')
+    profile.value = null
   }, 100)
 }
 const createChat = async () => {

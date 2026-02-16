@@ -15,6 +15,17 @@ export interface ResetPasswordRequest {
   new_password: string
 }
 
+export interface SessionResponse {
+  id: string;
+  refresh_token: string;
+  device: string;
+  ip: string;
+  user_agent: string;
+
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface BlockRequest {
   profile_id: string
   blocked_profile_id: string
@@ -32,9 +43,4 @@ export interface OTPSentResponse {
 export interface RecoveryResponse {
   message: string
   recovery_token: string
-}
-
-export interface TempTokenResponse {
-  user_id: string
-  temp_token: string
 }

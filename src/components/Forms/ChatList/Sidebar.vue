@@ -3,15 +3,27 @@ import ChatListContent from '@/components/Forms/ChatList/ChatListContent.vue'
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
 import ProfileOpenCard from '@/components/Cards/ProfileOpenCard.vue'
+import SettingsOpenCard from '@/components/Cards/SettingsOpenCard.vue'
+import SessionsOpenCard from '@/components/Cards/SessionsOpenCard.vue'
+import BlockedOpenCard from '@/components/Cards/BlockedOpenCard.vue'
 
 const profileStore = useProfileStore()
-const { selectedProfile } = storeToRefs(profileStore)
+const { selectedProfile, isSettingsOpen, isSessionsOpen, isBlocksOpen } = storeToRefs(profileStore)
 </script>
 
 <template>
   <div class="chats-side-form">
     <!-- Отображается профиль (если он выбран) -->
-    <ProfileOpenCard v-if="selectedProfile" @close="selectedProfile = null"/>
+    <ProfileOpenCard v-if="selectedProfile"/>
+
+    <!-- Настройки -->
+    <SettingsOpenCard v-else-if="isSettingsOpen"/>
+
+    <!-- Активные сессии -->
+    <SessionsOpenCard v-else-if="isSessionsOpen"/>
+
+    <!-- Черный список -->
+    <BlockedOpenCard v-else-if="isBlocksOpen"/>
 
     <!-- Иначе мои чаты -->
     <ChatListContent v-else/>

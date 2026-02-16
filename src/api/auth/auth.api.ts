@@ -2,6 +2,7 @@ import type {
   AuthRequest,
   OTPSentResponse,
   ResetPasswordRequest,
+  SessionResponse,
   VerifyOTPRequest,
 } from '@/types/auth/auth.dto.ts'
 import type { ErrorResponse, MessageResponse } from '@/types/error.dto.ts'
@@ -59,9 +60,26 @@ class AuthService {
     return response.json()
   }
 
+  async LogoutToken(token: string): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch(`/auth/logout/${token}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+    return response.json()
+  }
+
   // ? Текущий пользователь
   async Me(): Promise<User | ErrorResponse> {
     const response = await apiFetch('/auth/me', {
+      method: 'GET',
+      credentials: 'include',
+    })
+    return response.json()
+  }
+
+  // ? Список сессий
+  async GetSessions(): Promise<SessionResponse[] | ErrorResponse> {
+    const response = await apiFetch('/auth/sessions', {
       method: 'GET',
       credentials: 'include',
     })

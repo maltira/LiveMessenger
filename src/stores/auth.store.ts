@@ -3,6 +3,7 @@ import type {
   AuthRequest,
   OTPSentResponse,
   ResetPasswordRequest,
+  SessionResponse,
   VerifyOTPRequest,
 } from '@/types/auth/auth.dto.ts'
 import type { ErrorResponse, MessageResponse } from '@/types/error.dto.ts'
@@ -16,9 +17,12 @@ import { WSStatus } from '@/api/ws.api.ts'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     me: null as User | null,
+    sessions: [] as SessionResponse[],
+
     email: null as string | null,
     password: null as string | null,
     user_id: null as string | null,
+
     isLoading: true,
     error: null as ErrorResponse | null,
   }),
@@ -117,6 +121,24 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async LogoutSession(token: string): Promise<boolean> {
+      try {
+        this.error = null
+
+        const response: boolean | ErrorResponse = await authService.LogoutToken(token)
+        if (isErrorResponse(response)) {
+          this.error = response
+          return false
+        }
+        this.sessions = this.sessions.filter((session: SessionResponse) => session.refresh_token !== token)
+        return true
+      }
+      catch (error) {
+        this.error = {code: 500, error: error!.toString()}
+        return false
+      }
+    },
+
     async FetchMe(): Promise<void> {
       try {
         this.isLoading = true
@@ -129,6 +151,28 @@ export const useAuthStore = defineStore('auth', {
         }
 
         this.me = response
+      }
+      catch (error) {
+        this.error = {code: 500, error: error!.toString()}
+        return
+      }
+      finally {
+        this.isLoading = false
+      }
+    },
+
+    async FetchSessions(): Promise<void> {
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const response: SessionResponse[] | ErrorResponse = await authService.GetSessions()
+        if (isErrorResponse(response)) {
+          this.error = response
+          return
+        }
+
+        this.sessions = response
       }
       catch (error) {
         this.error = {code: 500, error: error!.toString()}
