@@ -34,10 +34,21 @@ class AuthService {
 
   // ? Верификация OTP
   async VerifyOTP(req: VerifyOTPRequest): Promise<MessageResponse | ErrorResponse> {
+    console.log(req)
     const response = await fetch(`${this.baseUrl}/auth/verify`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(req),
+    })
+    return response.json()
+  }
+
+  // ? Изменить почту
+  async ChangeMail(email: string): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch('/auth/change-mail', {
+      method: 'PUT',
+      credentials: 'include',
+      body: JSON.stringify({email: email}),
     })
     return response.json()
   }
@@ -60,6 +71,7 @@ class AuthService {
     return response.json()
   }
 
+  // ? Завершить сессию
   async LogoutToken(token: string): Promise<boolean | ErrorResponse> {
     const response = await apiFetch(`/auth/logout/${token}`, {
       method: 'DELETE',

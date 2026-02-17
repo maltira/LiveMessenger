@@ -3,10 +3,13 @@ import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
 import SettingsBlock from '@/components/Buttons/SettingsBlock.vue'
 import { onMounted, ref } from 'vue'
+import useAuthStore from '@/stores/auth.store.ts'
 
 // ? STORE
 const profileStore = useProfileStore()
-const { isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen } = storeToRefs(profileStore)
+const { isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen, isChangeMailOpen } = storeToRefs(profileStore)
+const authStore = useAuthStore()
+const { me } = storeToRefs(authStore)
 
 // ? FUNCTIONS
 const handleClose = () => {
@@ -31,6 +34,10 @@ const goToConfident = () => {
   isConfidentOpen.value = true
   handleClose()
 }
+const goToChangeMail = () => {
+  isChangeMailOpen.value = true
+  handleClose()
+}
 
 // ? REFS
 type SettingBlock = {
@@ -40,7 +47,7 @@ type SettingBlock = {
   func: Function | null
 }
 const settings = ref<SettingBlock[]>([
-  { icon: 'mail.svg', name: 'Почта для входа', description: 'example@example.com', func: null },
+  { icon: 'mail.svg', name: 'Почта для входа', description: me.value?.email || "example@mail.com", func: goToChangeMail },
   {
     icon: 'lock.svg',
     name: 'Пароль для входа',

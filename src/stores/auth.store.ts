@@ -14,7 +14,7 @@ import { useProfileStore } from '@/stores/profile.store.ts'
 import { WSStatus } from '@/api/ws.api.ts'
 
 
-export const useAuthStore = defineStore('auth', {
+const useAuthStore = defineStore('auth', {
   state: () => ({
     me: null as User | null,
     sessions: [] as SessionResponse[],
@@ -66,6 +66,27 @@ export const useAuthStore = defineStore('auth', {
       catch (error) {
         this.error = {code: 500, error: error!.toString()}
         return null
+      }
+      finally {
+        this.isLoading = false
+      }
+    },
+
+    async ChangeMail(email: string): Promise<boolean> {
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const response: boolean | ErrorResponse = await authService.ChangeMail(email)
+        if (isErrorResponse(response)) {
+          this.error = response
+          return false
+        }
+        return response
+      }
+      catch (error) {
+        this.error = {code: 500, error: error!.toString()}
+        return false
       }
       finally {
         this.isLoading = false
@@ -242,3 +263,4 @@ export const useAuthStore = defineStore('auth', {
     }
   }
 })
+export default useAuthStore

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Spinner from '@/components/UI/Spinner.vue'
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
 import { useOtpTimer } from '@/composables/useOtpTimer.ts'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
@@ -9,7 +9,8 @@ import { useNotification } from '@/composables/useNotifications.ts'
 
 // ? PROPS & EMIT
 interface Props {
-  action: "login" | "register" | "forgot-password"
+  action: "login" | "register" | "forgot-password" | "change-mail"
+  email?: string
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{
@@ -21,7 +22,7 @@ const emit = defineEmits<{
 const { infoNotification } = useNotification()
 const { timeLeft, isActive, start } = useOtpTimer(30)
 const authStore = useAuthStore()
-const { isLoading, error, email, user_id } = storeToRefs(authStore)
+const { isLoading, error, email, me } = storeToRefs(authStore)
 const { VerifyOTP, ResendOTP } = authStore
 
 // ? REF
@@ -90,7 +91,7 @@ function handlePaste(e: ClipboardEvent, index: number) {
 
 const goToResend = async () => {
   if (!isActive.value) {
-    await ResendOTP(user_id.value!, email.value!)
+    await ResendOTP(me.value!.id, props.email ? props.email : email.value!)
 
     if (error.value) {
       infoNotification("🚫 Ошибка " + error.value.code + " " + error.value.error)
@@ -102,9 +103,10 @@ const goToResend = async () => {
 
 const goToVerifyOTP = async () => {
   await VerifyOTP({
-    user_id: user_id.value!,
+    user_id: me.value!.id ,
     code: code.value.join(""),
-    action: props.action
+    action: props.action,
+    email: props.email || null
   })
 
   if (error.value) {

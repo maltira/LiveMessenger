@@ -2,7 +2,7 @@
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import { useNotification } from '@/composables/useNotifications.ts'
 import SessionElement from '@/components/Buttons/SessionElement.vue'
 

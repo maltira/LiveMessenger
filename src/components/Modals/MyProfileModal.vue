@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import router from '@/router'
 import { onMounted, onUnmounted } from 'vue'
 

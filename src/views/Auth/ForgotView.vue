@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import Spinner from '@/components/UI/Spinner.vue'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
