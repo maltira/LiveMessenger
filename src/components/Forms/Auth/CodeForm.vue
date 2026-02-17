@@ -93,7 +93,7 @@ const goToResend = async () => {
     await ResendOTP(user_id.value!, email.value!)
 
     if (error.value) {
-      infoNotification("🚫 Ошибка. " + error.value)
+      infoNotification("🚫 Ошибка " + error.value.code + " " + error.value.error)
       return
     }
     start()
@@ -108,7 +108,7 @@ const goToVerifyOTP = async () => {
   })
 
   if (error.value) {
-    infoNotification("🚫 Ошибка. " + error.value)
+    infoNotification("🚫 Ошибка. " + error.value.error)
   } else {
     emit("ok")
   }

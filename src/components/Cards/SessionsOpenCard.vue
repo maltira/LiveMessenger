@@ -16,7 +16,7 @@ const { sessions, isLoading: sessionLoading, error: sessionsError } = storeToRef
 // ? FUNCTIONS
 const handleClose = () => {
   if (sessionsList.value) {
-    sessionsList.value.style.margin = '0 5px'
+    sessionsList.value.style.transform = 'scale(0.97)'
     sessionsList.value.style.opacity = '0'
   }
 
@@ -52,7 +52,7 @@ onMounted(async () => {
     setTimeout(() => {
       sessionsList.value = document.getElementById('sessions-list')
       if (sessionsList.value) {
-        sessionsList.value.style.margin = '0'
+        sessionsList.value.style.transform = 'scale(1)'
         sessionsList.value.style.opacity = '1'
       }
     }, 1)
@@ -102,7 +102,7 @@ onMounted(async () => {
   gap: 8px;
 
   opacity: 0;
-  margin: 0 5px;
+  transform: scale(0.97);
 
   padding: 12px 24px;
 

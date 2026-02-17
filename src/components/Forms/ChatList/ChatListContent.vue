@@ -35,7 +35,7 @@ const fetchProfiles = async (value: string) => {
   findingProfiles.value = (await FetchBySearch(value, 5)) || []
 
   if (error.value) {
-    infoNotification('🚫 Ошибка. ' + error.value)
+    infoNotification('🚫 Ошибка. ' + error.value.error)
   }
 }
 const isAddHide = computed(() => {

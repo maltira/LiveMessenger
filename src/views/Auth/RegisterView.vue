@@ -27,7 +27,7 @@ const goToRegister = async () => {
   })
 
   if (error.value) {
-    infoNotification("🚫 Ошибка. " + error.value)
+    infoNotification("🚫 Ошибка. " + error.value.error)
   } else if (res) {
     user_id.value = res.user_id
     isCodeRequired.value = true

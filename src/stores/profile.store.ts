@@ -12,6 +12,7 @@ export const useProfileStore = defineStore('profile', {
     isSettingsOpen: false,
     isSessionsOpen: false,
     isBlocksOpen: false,
+    isConfidentOpen: false,
 
     search: "",
     findingProfiles: [] as Profile[],

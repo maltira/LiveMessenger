@@ -6,12 +6,12 @@ import { onMounted, ref } from 'vue'
 
 // ? STORE
 const profileStore = useProfileStore()
-const { isSettingsOpen, isSessionsOpen, isBlocksOpen } = storeToRefs(profileStore)
+const { isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen } = storeToRefs(profileStore)
 
 // ? FUNCTIONS
 const handleClose = () => {
   if (settingsList.value) {
-    settingsList.value.style.margin = '0 5px'
+    settingsList.value.style.transform = 'scale(0.97)'
     settingsList.value.style.opacity = '0'
   }
 
@@ -25,6 +25,10 @@ const goToSessions = () => {
 }
 const goToBlocks = () => {
   isBlocksOpen.value = true
+  handleClose()
+}
+const goToConfident = () => {
+  isConfidentOpen.value = true
   handleClose()
 }
 
@@ -59,7 +63,7 @@ const settings = ref<SettingBlock[]>([
     icon: 'user.svg',
     name: 'Параметры конфиденциальности',
     description: 'Ваши публичные данные',
-    func: null,
+    func: goToConfident,
   },
 ])
 const settingsList = ref<HTMLElement | null>(null)
@@ -68,7 +72,7 @@ onMounted(() => {
   setTimeout(() => {
     settingsList.value = document.getElementById('settings-list')
     if (settingsList.value) {
-      settingsList.value.style.margin = '0'
+      settingsList.value.style.transform = 'scale(1)'
       settingsList.value.style.opacity = '1'
     }
   }, 1)
@@ -115,7 +119,7 @@ onMounted(() => {
   gap: 8px;
 
   opacity: 0;
-  margin: 0 5px;
+  transform: scale(0.97);
 
   padding: 12px 24px;
 }

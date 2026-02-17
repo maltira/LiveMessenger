@@ -6,9 +6,10 @@ import ProfileOpenCard from '@/components/Cards/ProfileOpenCard.vue'
 import SettingsOpenCard from '@/components/Cards/SettingsOpenCard.vue'
 import SessionsOpenCard from '@/components/Cards/SessionsOpenCard.vue'
 import BlockedOpenCard from '@/components/Cards/BlockedOpenCard.vue'
+import ConfidentOpenCard from '@/components/Cards/ConfidentOpenCard.vue'
 
 const profileStore = useProfileStore()
-const { selectedProfile, isSettingsOpen, isSessionsOpen, isBlocksOpen } = storeToRefs(profileStore)
+const { selectedProfile, isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen } = storeToRefs(profileStore)
 </script>
 
 <template>
@@ -24,6 +25,9 @@ const { selectedProfile, isSettingsOpen, isSessionsOpen, isBlocksOpen } = storeT
 
     <!-- Черный список -->
     <BlockedOpenCard v-else-if="isBlocksOpen"/>
+
+    <!-- Настройки конфиденциальности -->
+    <ConfidentOpenCard v-else-if="isConfidentOpen"/>
 
     <!-- Иначе мои чаты -->
     <ChatListContent v-else/>

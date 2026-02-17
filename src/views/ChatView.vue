@@ -115,7 +115,7 @@ const sendMessage = async () => {
     await chatStore.SendMessage(activeChatId.value, msg)
 
     if (chatError.value) {
-      infoNotification('🚫 Сообщение не отправлено: ' + chatError.value)
+      infoNotification('🚫 Ошибка отправки ' + chatError.value.code + " " + chatError.value.error)
       return
     }
     activeChat.value.inputValue = ''
@@ -156,7 +156,7 @@ const editMessage = async () => {
     await chatStore.EditMessage(activeChat.value!.id, editMode.value!.id, updated)
 
     if (chatError.value) {
-      infoNotification("🚫 Ошибка редактирования: " + chatError.value)
+      infoNotification("🚫 Ошибка редактирования: " + chatError.value.error)
     }
     cancelEdit()
   }

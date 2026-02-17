@@ -16,7 +16,7 @@ const { blocks, error: blockError, isLoading: blockLoading } = storeToRefs(block
 // ? FUNCTIONS
 const handleClose = () => {
   if (blockedList.value) {
-    blockedList.value.style.margin = '0 5px'
+    blockedList.value.style.transform = 'scale(0.97)'
     blockedList.value.style.opacity = '0'
   }
 
@@ -47,7 +47,7 @@ onMounted(async () => {
     setTimeout(() => {
       blockedList.value = document.getElementById('blocked-list')
       if (blockedList.value) {
-        blockedList.value.style.margin = '0'
+        blockedList.value.style.transform = 'scale(1)'
         blockedList.value.style.opacity = '1'
       }
     }, 1)
@@ -90,7 +90,7 @@ onMounted(async () => {
   gap: 8px;
 
   opacity: 0;
-  margin: 0 5px;
+  transform: scale(0.97);
 
   padding: 12px 24px;
 

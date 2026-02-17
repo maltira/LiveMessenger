@@ -25,7 +25,7 @@ const goToReset = async () => {
   const res = await ForgotPassword(email.value!)
 
   if (error.value) {
-    infoNotification("🚫 Ошибка. " + error.value)
+    infoNotification("🚫 Ошибка. " + error.value.error)
   } else if (res) {
     user_id.value = res.user_id
     isCodeRequired.value = true

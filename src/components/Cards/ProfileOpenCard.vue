@@ -65,7 +65,7 @@ const goToBlock = async (isBlocking: boolean) => {
   }
 
   if (blockError.value) {
-    infoNotification('🚫 Ошибка. ' + blockError.value)
+    infoNotification('🚫 Ошибка '  + blockError.value.code + " " + blockError.value.error)
   }
 }
 function copyClipboard(text: string) {
@@ -85,7 +85,7 @@ const createChat = async () => {
   if (profile.value) {
     const chat = await CreatePrivateChat(profile.value.id)
     if (chatError.value) {
-      infoNotification("🚫 Ошибка создания чата: " + chatError.value)
+      infoNotification("🚫 Ошибка создания чата: " + chatError.value.error)
     } else if (chat) {
       await chatStore.setActiveChat(chat.id, me.value!.id)
     } else {
