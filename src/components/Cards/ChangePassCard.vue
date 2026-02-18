@@ -7,6 +7,7 @@ import AuthIcon from '@/components/UI/AuthIcon.vue'
 import Spinner from '@/components/UI/Spinner.vue'
 import CodeForm from '@/components/Forms/Auth/CodeForm.vue'
 import useAuthStore from '@/stores/auth.store.ts'
+import router from '@/router'
 
 // ? STORE
 const { infoNotification } = useNotification()
@@ -17,9 +18,9 @@ const { error, isLoading } = storeToRefs(authStore)
 
 // ? FUNCTIONS
 const handleClose = () => {
-  if (mailChangeElement.value) {
-    mailChangeElement.value.style.transform = 'scale(0.97)'
-    mailChangeElement.value.style.opacity = '0'
+  if (passChangeElement.value) {
+    passChangeElement.value.style.transform = 'scale(0.97)'
+    passChangeElement.value.style.opacity = '0'
   }
 
   setTimeout(() => {
@@ -29,17 +30,18 @@ const handleClose = () => {
 }
 
 const okAction = async () => {
-  if (authStore.me) authStore.me.email = email.value
-  infoNotification("✅ Почта была успешно изменена!")
+  await authStore.Logout()
+  await router.push('/login')
+  infoNotification("✅ Пароль был успешно изменен, повторите вход")
   handleClose()
 }
-const confirmMail = async () => {
-  if (email.value === authStore.me?.email) {
-    infoNotification("🚫 Новый адрес совпадает с текущим")
+const confirmPass = async () => {
+  if (pass1.value.trim() === pass2.value.trim()) {
+    infoNotification("🚫 Пароли не должны совпадать")
     return
   }
-  if (email.value && email.value.includes('@')) {
-    await authStore.ChangeMail(email.value)
+  if (pass2.value.trim().length >= 8) {
+    await authStore.ChangePass(pass1.value, pass2.value)
 
     if (error.value) {
       infoNotification("🚫 Ошибка: " + error.value.error)
@@ -48,7 +50,7 @@ const confirmMail = async () => {
     isCodeRequired.value = true
 
     setTimeout(() => {
-      codeElement.value = document.getElementById("change-mail-code")
+      codeElement.value = document.getElementById("change-pass-code")
 
       if (codeElement.value) {
         codeElement.value.style.opacity = '1'
@@ -56,10 +58,10 @@ const confirmMail = async () => {
       }
     }, 1)
   } else {
-    infoNotification("🚫 Ошибка: укажите верную почту")
+    infoNotification("🚫 Длина пароля должна быть не менее 8 символов")
   }
 }
-const backToEmail = () => {
+const backToPass = () => {
   if (codeElement.value) {
     codeElement.value.style.opacity = '0'
     codeElement.value.style.transform = 'scale(0.97)'
@@ -70,18 +72,21 @@ const backToEmail = () => {
 }
 
 // ? REFS
-const mailChangeElement = ref<HTMLElement | null>(null)
+const passChangeElement = ref<HTMLElement | null>(null)
 const codeElement = ref<HTMLElement | null>(null)
 
 const isCodeRequired = ref(false)
-const email = ref<string>("")
+const pass1 = ref<string>("")
+const isPass1Visible = ref(false)
+const pass2 = ref<string>("")
+const isPass2Visible = ref(false)
 
 onMounted(async () => {
   setTimeout(() => {
-    mailChangeElement.value = document.getElementById('mail-change')
-    if (mailChangeElement.value) {
-      mailChangeElement.value.style.transform = 'scale(1)'
-      mailChangeElement.value.style.opacity = '1'
+    passChangeElement.value = document.getElementById('pass-change')
+    if (passChangeElement.value) {
+      passChangeElement.value.style.transform = 'scale(1)'
+      passChangeElement.value.style.opacity = '1'
     }
   }, 1)
 })
@@ -94,32 +99,57 @@ onMounted(async () => {
     </div>
   </div>
 
-  <div id="mail-change" class="mail-change">
+  <div id="pass-change" class="pass-change">
     <CodeForm
-      id="change-mail-code"
+      id="change-pass-code"
       v-if="isCodeRequired"
-      action="change-mail"
-      :email_ch="email"
-      @close="backToEmail"
+      action="change-pass"
+      :pass_ch="pass2"
+      @close="backToPass"
       @ok="okAction"
       :style="{width: '100%', padding: 0, border: 'none'}"
     />
     <div v-else class="login-form">
       <div class="form-title">
-        <AuthIcon img="mail.svg"/>
+        <AuthIcon img="lock.svg"/>
         <div class="text-title">
-          <h4>Укажите новый адрес</h4>
-          <p>После изменения коды подтверждения будут приходить на новый адрес</p>
+          <h4>Изменить пароль</h4>
+          <p>Укажите старый пароль, чтобы подтвердить изменение</p>
         </div>
       </div>
-      <input
-        v-model="email"
-        required
-        type="email"
-        placeholder="example@gmail.com"
-        :class="{ active: email }"
-      />
-      <button class="btn-continue" @click="email ? confirmMail() : null" :class="{disabled: !email || isLoading}">
+      <div class="password-input">
+        <input
+          v-model="pass1"
+          required
+          :type="isPass1Visible ? 'text' : 'password'"
+          placeholder="Укажите старый пароль"
+          minlength="8"
+          class="password"
+        />
+        <img
+          :src="isPass1Visible ? '/icons/eye-closed.svg' : '/icons/eye-open.svg'"
+          alt="visible"
+          class="right-side-icon"
+          @click="isPass1Visible = !isPass1Visible"
+        />
+      </div>
+      <div class="password-input" >
+        <input
+          v-model="pass2"
+          required
+          :type="isPass2Visible ? 'text' : 'password'"
+          placeholder="Укажите новый пароль"
+          minlength="8"
+          class="password"
+        />
+        <img
+          :src="isPass2Visible ? '/icons/eye-closed.svg' : '/icons/eye-open.svg'"
+          alt="visible"
+          class="right-side-icon"
+          @click="isPass2Visible = !isPass2Visible"
+        />
+      </div>
+      <button class="btn-continue" @click="pass2.length > 7 && pass1.length > 7 ? confirmPass() : null" :class="{disabled: pass2.length < 8 || pass1.length < 8 || isLoading}">
         Продолжить
         <Spinner v-if="isLoading" size="small" color="white"/>
       </button>
@@ -128,7 +158,7 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-#change-mail-code {
+#change-pass-code {
   opacity: 0;
   transform: scale(0.97);
 }
@@ -149,7 +179,7 @@ onMounted(async () => {
     @include h5-text;
   }
 }
-.mail-change {
+.pass-change {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -194,11 +224,38 @@ onMounted(async () => {
       }
     }
   }
-  & > input {
+  & input {
     @include st-inline-input;
+
+    &::-ms-reveal {
+      width : 0;
+      height: 0;
+    }
+    &::-ms-clear {
+      width : 0;
+      height: 0;
+    }
   }
   & > .btn-continue {
     @include blue-fill-btn;
+  }
+}
+.password-input {
+  position: relative;
+  width: 100%;
+
+  & > img {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 2;
+    opacity: 0.4;
+
+    &:hover {
+      opacity: 0.5;
+    }
   }
 }
 .empty-data {

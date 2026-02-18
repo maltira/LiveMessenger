@@ -14,6 +14,7 @@ export const useProfileStore = defineStore('profile', {
     isBlocksOpen: false,
     isConfidentOpen: false,
     isChangeMailOpen: false,
+    isChangePassOpen: false,
 
     search: "",
     findingProfiles: [] as Profile[],

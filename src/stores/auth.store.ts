@@ -93,6 +93,27 @@ const useAuthStore = defineStore('auth', {
       }
     },
 
+    async ChangePass(oldPass: string, newPass: string): Promise<boolean> {
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const response: boolean | ErrorResponse = await authService.ChangePass(oldPass, newPass)
+        if (isErrorResponse(response)) {
+          this.error = response
+          return false
+        }
+        return response
+      }
+      catch (error) {
+        this.error = {code: 500, error: error!.toString()}
+        return false
+      }
+      finally {
+        this.isLoading = false
+      }
+    },
+
     async VerifyOTP(req: VerifyOTPRequest): Promise<void> {
       try {
         this.isLoading = true

@@ -46,9 +46,19 @@ class AuthService {
   // ? Изменить почту
   async ChangeMail(email: string): Promise<boolean | ErrorResponse> {
     const response = await apiFetch('/auth/change-mail', {
-      method: 'PUT',
+      method: 'POST',
       credentials: 'include',
       body: JSON.stringify({email: email}),
+    })
+    return response.json()
+  }
+
+  // ? Изменить пароль
+  async ChangePass(oldPass: string, newPass: string): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch('/auth/change-pass', {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify({password: oldPass, new_password: newPass}),
     })
     return response.json()
   }

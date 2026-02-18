@@ -7,8 +7,9 @@ export interface AuthRequest {
 export interface VerifyOTPRequest {
   user_id: string
   email?: string | null
+  password?: string | null
   code: string
-  action: "login" | "register" | "forgot-password" | "change-mail"
+  action: "login" | "register" | "forgot-password" | "change-mail" | "change-pass"
 }
 
 export interface ResetPasswordRequest {

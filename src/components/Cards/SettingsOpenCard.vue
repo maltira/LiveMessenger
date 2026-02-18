@@ -7,7 +7,7 @@ import useAuthStore from '@/stores/auth.store.ts'
 
 // ? STORE
 const profileStore = useProfileStore()
-const { isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen, isChangeMailOpen } = storeToRefs(profileStore)
+const { isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen, isChangeMailOpen, isChangePassOpen } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { me } = storeToRefs(authStore)
 
@@ -38,6 +38,10 @@ const goToChangeMail = () => {
   isChangeMailOpen.value = true
   handleClose()
 }
+const goToChangePass = () => {
+  isChangePassOpen.value = true
+  handleClose()
+}
 
 // ? REFS
 type SettingBlock = {
@@ -52,7 +56,7 @@ const settings = ref<SettingBlock[]>([
     icon: 'lock.svg',
     name: 'Пароль для входа',
     description: 'Здесь вы можете изменить пароль',
-    func: null,
+    func: goToChangePass,
   },
   {
     icon: 'session.svg',

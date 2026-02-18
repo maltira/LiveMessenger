@@ -9,8 +9,9 @@ import { useNotification } from '@/composables/useNotifications.ts'
 
 // ? PROPS & EMIT
 interface Props {
-  action: "login" | "register" | "forgot-password" | "change-mail"
-  email?: string
+  action: "login" | "register" | "forgot-password" | "change-mail" | "change-pass"
+  email_ch?: string
+  pass_ch?: string
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{
@@ -22,7 +23,7 @@ const emit = defineEmits<{
 const { infoNotification } = useNotification()
 const { timeLeft, isActive, start } = useOtpTimer(30)
 const authStore = useAuthStore()
-const { isLoading, error, email, me } = storeToRefs(authStore)
+const { isLoading, error, email, me, user_id } = storeToRefs(authStore)
 const { VerifyOTP, ResendOTP } = authStore
 
 // ? REF
@@ -91,7 +92,7 @@ function handlePaste(e: ClipboardEvent, index: number) {
 
 const goToResend = async () => {
   if (!isActive.value) {
-    await ResendOTP(me.value!.id, props.email ? props.email : email.value!)
+    await ResendOTP(me.value!.id, props.email_ch ? props.email_ch : email.value!)
 
     if (error.value) {
       infoNotification("🚫 Ошибка " + error.value.code + " " + error.value.error)
@@ -101,12 +102,18 @@ const goToResend = async () => {
   }
 }
 
+const computeMail = computed(() => {
+  return email.value || props.email_ch
+})
+
 const goToVerifyOTP = async () => {
+  console.log(me.value?.id, user_id.value)
   await VerifyOTP({
-    user_id: me.value!.id ,
+    user_id: me.value?.id || user_id.value!,
     code: code.value.join(""),
     action: props.action,
-    email: props.email || null
+    email: props.email_ch || null,
+    password: props.pass_ch || null,
   })
 
   if (error.value) {
@@ -130,7 +137,7 @@ onMounted(() => {
       <AuthIcon img="send.svg" />
       <div class="text-title">
         <h4>Подтверждение почты</h4>
-        <p>Мы отправили код подтверждения на <span style="font-weight: 600">{{ email }}</span></p>
+        <p>Мы отправили код подтверждения на <span style="font-weight: 600">{{ computeMail }}</span></p>
       </div>
     </div>
     <div class="form-inputs">
