@@ -75,7 +75,7 @@ export const useBlockStore = defineStore('block', {
           this.error = response
           return false
         }
-        this.blocks = this.blocks.filter((b: Block) => b.id !== id)
+        this.blocks = this.blocks.filter((b: Block) => b.blocked_profile_id !== id)
         if (this.blockedIds.has(id)) {
           this.blockedIds.delete(id)
         }

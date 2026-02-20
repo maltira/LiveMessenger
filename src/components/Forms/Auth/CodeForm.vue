@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Spinner from '@/components/UI/Spinner.vue'
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
 import { useOtpTimer } from '@/composables/useOtpTimer.ts'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
@@ -9,19 +9,22 @@ import { useNotification } from '@/composables/useNotifications.ts'
 
 // ? PROPS & EMIT
 interface Props {
-  action: "login" | "register" | "forgot-password"
+  action: "login" | "register" | "forgot-password" | "change-mail" | "change-pass" | "delete-account"
+  email_ch?: string
+  pass_ch?: string
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{
   ok: []
   close: []
+  recovery: []
 }>()
 
 // ? STORE
 const { infoNotification } = useNotification()
 const { timeLeft, isActive, start } = useOtpTimer(30)
 const authStore = useAuthStore()
-const { isLoading, error, email, user_id } = storeToRefs(authStore)
+const { isLoading, error, email, me, user_id } = storeToRefs(authStore)
 const { VerifyOTP, ResendOTP } = authStore
 
 // ? REF
@@ -90,25 +93,34 @@ function handlePaste(e: ClipboardEvent, index: number) {
 
 const goToResend = async () => {
   if (!isActive.value) {
-    await ResendOTP(user_id.value!, email.value!)
+    await ResendOTP(me.value?.id || user_id.value!, props.email_ch ? props.email_ch : email.value!)
 
     if (error.value) {
-      infoNotification("🚫 Ошибка. " + error.value)
+      infoNotification("🚫 Ошибка " + error.value.code + " " + error.value.error)
       return
     }
     start()
   }
 }
 
+const computeMail = computed(() => {
+  return email.value || props.email_ch || me.value!.email
+})
+
 const goToVerifyOTP = async () => {
-  await VerifyOTP({
-    user_id: user_id.value!,
+  const res = await VerifyOTP({
+    user_id: me.value?.id || user_id.value!,
     code: code.value.join(""),
-    action: props.action
+    action: props.action,
+    email: props.email_ch || null,
+    password: props.pass_ch || null,
   })
 
-  if (error.value) {
-    infoNotification("🚫 Ошибка. " + error.value)
+  if (!res && error.value) {
+    infoNotification("🚫 Ошибка. " + error.value.error)
+  } else if (typeof res !== 'boolean') {
+    authStore.recovery = res
+    emit("recovery")
   } else {
     emit("ok")
   }
@@ -128,7 +140,7 @@ onMounted(() => {
       <AuthIcon img="send.svg" />
       <div class="text-title">
         <h4>Подтверждение почты</h4>
-        <p>Мы отправили код подтверждения на <span style="font-weight: 600">{{ email }}</span></p>
+        <p>Мы отправили код подтверждения на <span style="font-weight: 600">{{ computeMail }}</span></p>
       </div>
     </div>
     <div class="form-inputs">

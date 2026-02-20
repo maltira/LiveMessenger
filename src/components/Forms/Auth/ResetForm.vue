@@ -2,7 +2,7 @@
 import Spinner from '@/components/UI/Spinner.vue'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
 import { computed, ref } from 'vue'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
 
 // ? PROPS & EMIT

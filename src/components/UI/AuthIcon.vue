@@ -28,6 +28,9 @@ img {
   background: $white-primary;
   border: 1px solid rgba($black-primary, 0.1);
   box-shadow: 0 4px 4px 0 rgba($black-primary, 0.05);
+
+  width: 48px;
+  height: 48px;
 }
 .outer-container {
   padding: 10px;

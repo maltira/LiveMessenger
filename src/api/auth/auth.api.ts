@@ -1,13 +1,14 @@
 import type {
   AuthRequest,
   OTPSentResponse,
+  RecoveryResponse,
   ResetPasswordRequest,
+  SessionResponse,
   VerifyOTPRequest,
 } from '@/types/auth/auth.dto.ts'
-import type { ErrorResponse, MessageResponse } from '@/types/error.dto.ts'
+import type { ErrorResponse } from '@/types/error.dto.ts'
 import type { User } from '@/types/auth/auth.model.ts'
 import { apiFetch } from '@/api/fetch.ts'
-
 
 class AuthService {
   private baseUrl = import.meta.env.VITE_API_URL
@@ -32,7 +33,7 @@ class AuthService {
   }
 
   // ? Верификация OTP
-  async VerifyOTP(req: VerifyOTPRequest): Promise<MessageResponse | ErrorResponse> {
+  async VerifyOTP(req: VerifyOTPRequest): Promise<boolean | RecoveryResponse | ErrorResponse> {
     const response = await fetch(`${this.baseUrl}/auth/verify`, {
       method: 'POST',
       credentials: 'include',
@@ -41,19 +42,39 @@ class AuthService {
     return response.json()
   }
 
-  // ? Обновление токенов
-  async Refresh(): Promise<MessageResponse | ErrorResponse> {
-    const response = await fetch(`${this.baseUrl}/auth/refresh`, {
+  // ? Изменить почту
+  async ChangeMail(email: string): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch('/auth/change-mail', {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify({email: email}),
+    })
+    return response.json()
+  }
+
+  // ? Изменить пароль
+  async ChangePass(oldPass: string, newPass: string): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch('/auth/change-pass', {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify({password: oldPass, new_password: newPass}),
+    })
+    return response.json()
+  }
+
+  // ? Выход из профиля
+  async Logout(): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch('/auth/logout', {
       method: 'POST',
       credentials: 'include',
     })
     return response.json()
   }
 
-  // ? Выход из профиля
-  async Logout(): Promise<MessageResponse | ErrorResponse> {
-    const response = await apiFetch('/auth/logout', {
-      method: 'POST',
+  // ? Завершить сессию
+  async LogoutToken(token: string): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch(`/auth/logout/${token}`, {
+      method: 'DELETE',
       credentials: 'include',
     })
     return response.json()
@@ -68,8 +89,35 @@ class AuthService {
     return response.json()
   }
 
+  // ? Восстановление аккаунта
+  async RecoveryAccount(user_id: string, token: string): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch(`/auth/recovery/${user_id}?token=` + token, {
+      method: 'PUT',
+      credentials: 'include',
+    })
+    return response.json()
+  }
+
+  // ? Восстановление аккаунта
+  async DeleteAccount(email: string): Promise<OTPSentResponse | ErrorResponse> {
+    const response = await apiFetch('/auth/delete/' + email, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    return response.json()
+  }
+
+  // ? Список сессий
+  async GetSessions(): Promise<SessionResponse[] | ErrorResponse> {
+    const response = await apiFetch('/auth/sessions', {
+      method: 'GET',
+      credentials: 'include',
+    })
+    return response.json()
+  }
+
   // ? Переотправить OTP
-  async ResendOTP(user_id: string, email: string): Promise<MessageResponse | ErrorResponse> {
+  async ResendOTP(user_id: string, email: string): Promise<boolean | ErrorResponse> {
     const response = await apiFetch(`/auth/resend?id=${user_id}&email=${email}`, {
       method: 'POST',
       credentials: 'include',
@@ -87,7 +135,7 @@ class AuthService {
   }
 
   // ? Восстановление пароля
-  async ResetPassword(req: ResetPasswordRequest): Promise<MessageResponse | ErrorResponse> {
+  async ResetPassword(req: ResetPasswordRequest): Promise<boolean | ErrorResponse> {
     const response = await apiFetch(`/auth/reset-password`, {
       method: 'POST',
       credentials: 'include',

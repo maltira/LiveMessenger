@@ -9,6 +9,15 @@ export const useProfileStore = defineStore('profile', {
     me: null as Profile | null,
     selectedProfile: null as Profile | null,
 
+    isSettingsOpen: false,
+    isSessionsOpen: false,
+    isBlocksOpen: false,
+    isConfidentOpen: false,
+    isChangeMailOpen: false,
+    isChangePassOpen: false,
+    isDeleteModalOpen: false,
+    isLanguagesOpen: false,
+
     search: "",
     findingProfiles: [] as Profile[],
     isSearching: false,

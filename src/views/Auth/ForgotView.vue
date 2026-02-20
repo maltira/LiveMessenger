@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import Spinner from '@/components/UI/Spinner.vue'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
 import AuthIcon from '@/components/UI/AuthIcon.vue'
@@ -25,7 +25,7 @@ const goToReset = async () => {
   const res = await ForgotPassword(email.value!)
 
   if (error.value) {
-    infoNotification("🚫 Ошибка. " + error.value)
+    infoNotification("🚫 Ошибка. " + error.value.error)
   } else if (res) {
     user_id.value = res.user_id
     isCodeRequired.value = true

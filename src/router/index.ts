@@ -9,6 +9,7 @@ import RegisterView from '@/views/Auth/RegisterView.vue'
 import ForgotView from '@/views/Auth/ForgotView.vue'
 import { checkAuth } from '@/utils/CheckFunc.ts'
 import NotFoundView from '@/views/NotFoundView.vue'
+import RecoveryView from '@/views/Auth/RecoveryView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -38,6 +39,12 @@ const routes: RouteRecordRaw[] = [
     name: 'RegisterView',
     component: RegisterView,
     meta: { title: "Регистрация", hideSidebar: true }
+  },
+  {
+    path: '/recovery',
+    name: 'RecoveryView',
+    component: RecoveryView,
+    meta: { title: "Восстановление доступа", hideSidebar: true },
   },
 
   // ? 404

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import router from '@/router'
 import { onMounted, onUnmounted } from 'vue'
 
@@ -12,7 +12,7 @@ const emit = defineEmits<{
 
 // ? STORE
 const profileStore = useProfileStore()
-const { me, selectedProfile } = storeToRefs(profileStore)
+const { me, selectedProfile, isSettingsOpen, isLanguagesOpen } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { Logout } = authStore
 
@@ -48,6 +48,14 @@ const goToLogout = async () => {
 }
 const goToMyProfile = () => {
   selectedProfile.value = me.value
+  handleClose()
+}
+const goToSettings = () => {
+  isSettingsOpen.value = true
+  handleClose()
+}
+const goToLanguages = () => {
+  isLanguagesOpen.value = true
   handleClose()
 }
 
@@ -89,11 +97,11 @@ onUnmounted(() => {
       <p class="link-name">Тёмная тема</p>
     </div>
     <div class="divider"></div>
-    <div class="modal-link">
+    <div class="modal-link" @click="goToSettings">
       <img src="/icons/settings.svg" alt="settings">
       <p class="link-name">Настройки</p>
     </div>
-    <div class="modal-link">
+    <div class="modal-link" @click="goToLanguages">
       <img src="/icons/language.svg" alt="lang">
       <p class="link-name">Язык интерфейса</p>
     </div>

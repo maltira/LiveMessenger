@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
-import { useAuthStore } from '@/stores/auth.store.ts'
+import useAuthStore from '@/stores/auth.store.ts'
 import router from '@/router'
 import { useBlockStore } from '@/stores/block.store.ts'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
@@ -10,11 +10,6 @@ import Skeleton from '@/components/UI/Skeleton.vue'
 import { formatBirthDate, timeAgo } from '@/utils/DateFormat.ts'
 import { useOnlineStore } from '@/stores/online.store.ts'
 import { useChatStore } from '@/stores/chats.store.ts'
-
-// ? EMIT
-const emit = defineEmits<{
-  close: []
-}>()
 
 // ? STORE
 const { infoNotification } = useNotification()
@@ -35,7 +30,7 @@ const onlineStore = useOnlineStore()
 const { onlineProfiles, isUserOnline, userLastSeen } = storeToRefs(onlineStore)
 const { fetchProfileOnline } = onlineStore
 const chatStore = useChatStore()
-const { error: chatError, isLoading: chatLoading } = storeToRefs(chatStore)
+const { error: chatError } = storeToRefs(chatStore)
 const { CreatePrivateChat } = chatStore
 
 // ? REF
@@ -70,7 +65,7 @@ const goToBlock = async (isBlocking: boolean) => {
   }
 
   if (blockError.value) {
-    infoNotification('🚫 Ошибка. ' + blockError.value)
+    infoNotification('🚫 Ошибка '  + blockError.value.code + " " + blockError.value.error)
   }
 }
 function copyClipboard(text: string) {
@@ -83,14 +78,14 @@ const handleClose = () => {
     aProfile.value.style.opacity = "0";
   }
   setTimeout(() => {
-    emit('close')
+    profile.value = null
   }, 100)
 }
 const createChat = async () => {
   if (profile.value) {
     const chat = await CreatePrivateChat(profile.value.id)
     if (chatError.value) {
-      infoNotification("🚫 Ошибка создания чата: " + chatError.value)
+      infoNotification("🚫 Ошибка создания чата: " + chatError.value.error)
     } else if (chat) {
       await chatStore.setActiveChat(chat.id, me.value!.id)
     } else {
