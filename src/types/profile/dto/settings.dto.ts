@@ -1,7 +1,7 @@
 
 export interface SettingsUpdateReq {
-  show_online_status?: boolean;
-  show_birth_date?: "all" | "nobody";
-  dark_mode?: boolean;
-  language?: "ru-RU" | "en-US";
+  show_online_status: boolean | null;
+  show_birth_date: "all" | "nobody" | null;
+  dark_mode: boolean | null;
+  language: string | null;
 }

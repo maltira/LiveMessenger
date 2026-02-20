@@ -150,6 +150,8 @@ onUnmounted(() => {
   border-radius: 20px;
   padding: 28px;
   border: 1px solid rgba($black-primary, 0.1);
+
+  box-shadow: 0 0 32px 0 rgba($black-primary, 0.07);
 }
 .title {
   display: flex;

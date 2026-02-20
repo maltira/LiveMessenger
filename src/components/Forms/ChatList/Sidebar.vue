@@ -9,6 +9,7 @@ import BlockedOpenCard from '@/components/Cards/BlockedOpenCard.vue'
 import ConfidentOpenCard from '@/components/Cards/ConfidentOpenCard.vue'
 import ChangeMailCard from '@/components/Cards/ChangeMailCard.vue'
 import ChangePassCard from '@/components/Cards/ChangePassCard.vue'
+import LanguageCard from '@/components/Cards/LanguageCard.vue'
 
 const profileStore = useProfileStore()
 const {
@@ -19,6 +20,7 @@ const {
   isConfidentOpen,
   isChangeMailOpen,
   isChangePassOpen,
+  isLanguagesOpen,
 } = storeToRefs(profileStore)
 </script>
 
@@ -44,6 +46,9 @@ const {
 
     <!-- Смена пароля -->
     <ChangePassCard v-else-if="isChangePassOpen"/>
+
+    <!-- Выбор языка -->
+    <LanguageCard v-else-if="isLanguagesOpen"/>
 
     <!-- Иначе мои чаты -->
     <ChatListContent v-else/>

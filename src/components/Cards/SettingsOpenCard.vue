@@ -7,7 +7,15 @@ import useAuthStore from '@/stores/auth.store.ts'
 
 // ? STORE
 const profileStore = useProfileStore()
-const { isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen, isChangeMailOpen, isChangePassOpen, isDeleteModalOpen } = storeToRefs(profileStore)
+const {
+  isSettingsOpen,
+  isSessionsOpen,
+  isBlocksOpen,
+  isConfidentOpen,
+  isChangeMailOpen,
+  isChangePassOpen,
+  isDeleteModalOpen,
+} = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { me } = storeToRefs(authStore)
 

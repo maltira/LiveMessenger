@@ -12,7 +12,7 @@ const emit = defineEmits<{
 
 // ? STORE
 const profileStore = useProfileStore()
-const { me, selectedProfile, isSettingsOpen } = storeToRefs(profileStore)
+const { me, selectedProfile, isSettingsOpen, isLanguagesOpen } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { Logout } = authStore
 
@@ -52,6 +52,10 @@ const goToMyProfile = () => {
 }
 const goToSettings = () => {
   isSettingsOpen.value = true
+  handleClose()
+}
+const goToLanguages = () => {
+  isLanguagesOpen.value = true
   handleClose()
 }
 
@@ -97,7 +101,7 @@ onUnmounted(() => {
       <img src="/icons/settings.svg" alt="settings">
       <p class="link-name">Настройки</p>
     </div>
-    <div class="modal-link">
+    <div class="modal-link" @click="goToLanguages">
       <img src="/icons/language.svg" alt="lang">
       <p class="link-name">Язык интерфейса</p>
     </div>
