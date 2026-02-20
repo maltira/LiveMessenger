@@ -2,11 +2,12 @@ import { defineStore } from 'pinia'
 import type {
   AuthRequest,
   OTPSentResponse,
+  RecoveryResponse,
   ResetPasswordRequest,
   SessionResponse,
   VerifyOTPRequest,
 } from '@/types/auth/auth.dto.ts'
-import type { ErrorResponse, MessageResponse } from '@/types/error.dto.ts'
+import type { ErrorResponse } from '@/types/error.dto.ts'
 import { authService } from '@/api/auth/auth.api.ts'
 import { isErrorResponse } from '@/utils/ResponseType.ts'
 import type { User } from '@/types/auth/auth.model.ts'
@@ -22,6 +23,8 @@ const useAuthStore = defineStore('auth', {
     email: null as string | null,
     password: null as string | null,
     user_id: null as string | null,
+
+    recovery: null as RecoveryResponse | null,
 
     isLoading: true,
     error: null as ErrorResponse | null,
@@ -114,26 +117,28 @@ const useAuthStore = defineStore('auth', {
       }
     },
 
-    async VerifyOTP(req: VerifyOTPRequest): Promise<void> {
+    async VerifyOTP(req: VerifyOTPRequest): Promise<boolean | RecoveryResponse> {
       try {
         this.isLoading = true
         this.error = null
 
-        const response: MessageResponse | ErrorResponse = await authService.VerifyOTP(req)
+        const response: boolean | RecoveryResponse | ErrorResponse = await authService.VerifyOTP(req)
         if (isErrorResponse(response)) {
           this.error = response
-          return
+          return false
         }
 
-        if (req.action != "forgot-password") {
+        if (req.action in ['login', 'register'] && response === true) {
           const profileStore = useProfileStore()
           await profileStore.FetchMe()
           WSStatus.connect()
         }
+
+        return response
       }
       catch (error) {
         this.error = {code: 500, error: error!.toString()}
-        return
+        return false
       }
       finally {
         this.isLoading = false
@@ -145,7 +150,7 @@ const useAuthStore = defineStore('auth', {
         this.isLoading = true
         this.error = null
 
-        const response: MessageResponse | ErrorResponse = await authService.Logout()
+        const response: boolean | ErrorResponse = await authService.Logout()
         if (isErrorResponse(response)) {
           this.error = response
           return
@@ -229,13 +234,13 @@ const useAuthStore = defineStore('auth', {
       try {
         this.error = null
 
-        const response: MessageResponse | ErrorResponse = await authService.ResendOTP(userID, email)
+        const response: boolean | ErrorResponse = await authService.ResendOTP(userID, email)
         if (isErrorResponse(response)) {
           this.error = response
           return false
         }
 
-        return true
+        return response
       }
       catch (error) {
         this.error = {code: 500, error: error!.toString()}
@@ -270,7 +275,7 @@ const useAuthStore = defineStore('auth', {
         this.isLoading = true
         this.error = null
 
-        const response: MessageResponse | ErrorResponse = await authService.ResetPassword(req)
+        const response: boolean | ErrorResponse = await authService.ResetPassword(req)
         if (isErrorResponse(response)) {
           this.error = response
         }
@@ -281,7 +286,51 @@ const useAuthStore = defineStore('auth', {
       finally {
         this.isLoading = false
       }
-    }
+    },
+
+    async RecoveryAccount(user_id: string, token: string): Promise<boolean> {
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const response: boolean | ErrorResponse = await authService.RecoveryAccount(user_id, token)
+        if (isErrorResponse(response)) {
+          this.error = response
+          return false
+        }
+
+        return response
+      }
+      catch (error) {
+        this.error = {code: 500, error: error!.toString()}
+        return false
+      }
+      finally {
+        this.isLoading = false
+      }
+    },
+
+    async DeleteAccount(email: string): Promise<boolean> {
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const response: OTPSentResponse | ErrorResponse = await authService.DeleteAccount(email)
+        if (isErrorResponse(response)) {
+          this.error = response
+          return false
+        }
+
+        return true
+      }
+      catch (error) {
+        this.error = {code: 500, error: error!.toString()}
+        return false
+      }
+      finally {
+        this.isLoading = false
+      }
+    },
   }
 })
 export default useAuthStore

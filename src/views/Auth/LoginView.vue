@@ -37,6 +37,9 @@ const okAction = () => {
   infoNotification("👋 Добро пожаловать в Лайв!")
   router.push('/chat')
 }
+const recoveryAction = async () => {
+  await router.push("/recovery")
+}
 </script>
 
 <template>
@@ -46,6 +49,7 @@ const okAction = () => {
       action="login"
       @close="isCodeRequired = false"
       @ok="okAction"
+      @recovery="recoveryAction"
     />
     <div v-else class="login-form">
       <div class="form-title">
@@ -164,23 +168,27 @@ const okAction = () => {
   & > .input-element {
     display: flex;
     flex-direction: column;
+    align-items: end;
     gap: 8px;
 
     & > p.input-info {
       @include tag-text;
       font-weight: 500;
       opacity: 0.6;
+
+      width: 100%;
     }
 
     & input {
       @include st-inline-input;
+      width: 100%;
     }
 
     & > #forgot-password {
       @include tag-text;
-      text-align: end;
       cursor: pointer;
       color: $blue-color;
+      width: fit-content;
 
       &:hover {
         text-decoration: underline;
@@ -190,6 +198,7 @@ const okAction = () => {
 }
 .password-input {
   position: relative;
+  width: 100%;
 
   & > img {
     position: absolute;

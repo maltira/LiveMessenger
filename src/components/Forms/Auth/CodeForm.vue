@@ -9,7 +9,7 @@ import { useNotification } from '@/composables/useNotifications.ts'
 
 // ? PROPS & EMIT
 interface Props {
-  action: "login" | "register" | "forgot-password" | "change-mail" | "change-pass"
+  action: "login" | "register" | "forgot-password" | "change-mail" | "change-pass" | "delete-account"
   email_ch?: string
   pass_ch?: string
 }
@@ -17,6 +17,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   ok: []
   close: []
+  recovery: []
 }>()
 
 // ? STORE
@@ -92,7 +93,7 @@ function handlePaste(e: ClipboardEvent, index: number) {
 
 const goToResend = async () => {
   if (!isActive.value) {
-    await ResendOTP(me.value!.id, props.email_ch ? props.email_ch : email.value!)
+    await ResendOTP(me.value?.id || user_id.value!, props.email_ch ? props.email_ch : email.value!)
 
     if (error.value) {
       infoNotification("🚫 Ошибка " + error.value.code + " " + error.value.error)
@@ -103,12 +104,11 @@ const goToResend = async () => {
 }
 
 const computeMail = computed(() => {
-  return email.value || props.email_ch
+  return email.value || props.email_ch || me.value!.email
 })
 
 const goToVerifyOTP = async () => {
-  console.log(me.value?.id, user_id.value)
-  await VerifyOTP({
+  const res = await VerifyOTP({
     user_id: me.value?.id || user_id.value!,
     code: code.value.join(""),
     action: props.action,
@@ -116,8 +116,11 @@ const goToVerifyOTP = async () => {
     password: props.pass_ch || null,
   })
 
-  if (error.value) {
+  if (!res && error.value) {
     infoNotification("🚫 Ошибка. " + error.value.error)
+  } else if (typeof res !== 'boolean') {
+    authStore.recovery = res
+    emit("recovery")
   } else {
     emit("ok")
   }

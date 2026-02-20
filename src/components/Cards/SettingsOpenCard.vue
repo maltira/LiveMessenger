@@ -7,7 +7,7 @@ import useAuthStore from '@/stores/auth.store.ts'
 
 // ? STORE
 const profileStore = useProfileStore()
-const { isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen, isChangeMailOpen, isChangePassOpen } = storeToRefs(profileStore)
+const { isSettingsOpen, isSessionsOpen, isBlocksOpen, isConfidentOpen, isChangeMailOpen, isChangePassOpen, isDeleteModalOpen } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { me } = storeToRefs(authStore)
 
@@ -42,6 +42,9 @@ const goToChangePass = () => {
   isChangePassOpen.value = true
   handleClose()
 }
+const goToDelete = () => {
+  isDeleteModalOpen.value = true
+}
 
 // ? REFS
 type SettingBlock = {
@@ -75,6 +78,12 @@ const settings = ref<SettingBlock[]>([
     name: 'Параметры конфиденциальности',
     description: 'Ваши публичные данные',
     func: goToConfident,
+  },
+  {
+    icon: 'delete-outline-black.svg',
+    name: 'Удалить аккаунт',
+    description: 'Совершайте это действие осознанно',
+    func: goToDelete,
   },
 ])
 const settingsList = ref<HTMLElement | null>(null)

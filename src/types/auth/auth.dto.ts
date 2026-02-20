@@ -9,7 +9,7 @@ export interface VerifyOTPRequest {
   email?: string | null
   password?: string | null
   code: string
-  action: "login" | "register" | "forgot-password" | "change-mail" | "change-pass"
+  action: "login" | "register" | "forgot-password" | "change-mail" | "change-pass" | "delete-account"
 }
 
 export interface ResetPasswordRequest {
@@ -43,6 +43,6 @@ export interface OTPSentResponse {
 }
 
 export interface RecoveryResponse {
-  message: string
+  to_be_deleted_at: Date
   recovery_token: string
 }
