@@ -12,7 +12,7 @@ import router from '@/router'
 // ? STORE
 const { infoNotification } = useNotification()
 const profileStore = useProfileStore()
-const { isSettingsOpen, isChangeMailOpen } = storeToRefs(profileStore)
+const { isSettingsOpen, isChangePassOpen } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { error, isLoading } = storeToRefs(authStore)
 
@@ -24,7 +24,7 @@ const handleClose = () => {
   }
 
   setTimeout(() => {
-    isChangeMailOpen.value = false
+    isChangePassOpen.value = false
     isSettingsOpen.value = true
   }, 100)
 }
