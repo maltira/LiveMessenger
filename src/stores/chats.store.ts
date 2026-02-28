@@ -206,6 +206,7 @@ export const useChatStore = defineStore('chats', {
       try {
         this.isLoading = true
         this.error = null
+        console.log("FetchMessages", chat_id, l, o)
 
         const response: GetMessagesResponse | ErrorResponse = await messageService.GetMessages(chat_id, o, l)
         if (isErrorResponse(response)) {

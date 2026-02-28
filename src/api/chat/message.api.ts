@@ -9,7 +9,7 @@ import type { Message } from '@/types/chat/message.model.ts'
 
 class MessageService {
   async GetMessages(chat_id: string, offset: number = 0, limit: number = 50): Promise<GetMessagesResponse | ErrorResponse> {
-    const response = await apiFetch(`/chat/${chat_id}/messages?offset=${offset}&limit=${limit}&offset=${offset}`, {
+    const response = await apiFetch(`/chat/${chat_id}/messages?limit=${limit}&offset=${offset}`, {
       method: 'GET',
     })
     return response.json()
