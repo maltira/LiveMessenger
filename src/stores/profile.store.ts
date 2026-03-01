@@ -3,6 +3,7 @@ import type { ErrorResponse } from '@/types/error.dto.ts'
 import { isErrorResponse } from '@/utils/ResponseType.ts'
 import type { Profile } from '@/types/profile/profile.model.ts'
 import { profileService } from '@/api/profile/profile.api.ts'
+import type { UpdateProfileRequest } from '@/types/profile/dto/profile.dto.ts'
 
 export const useProfileStore = defineStore('profile', {
   state: () => ({
@@ -17,6 +18,7 @@ export const useProfileStore = defineStore('profile', {
     isChangePassOpen: false,
     isDeleteModalOpen: false,
     isLanguagesOpen: false,
+    isChangeProfileOpen: false,
 
     search: "",
     findingProfiles: [] as Profile[],
@@ -92,6 +94,35 @@ export const useProfileStore = defineStore('profile', {
         this.error = { code: 500, error: error!.toString() }
         return null
       } finally {
+        this.isLoading = false
+      }
+    },
+
+    async UpdateProfile(req: UpdateProfileRequest): Promise<boolean> {
+      try {
+        this.isLoading = true
+        this.error = null
+
+        const res: boolean | ErrorResponse = await profileService.UpdateProfile(req)
+        if (isErrorResponse(res)) {
+          this.error = res
+          return false
+        }
+
+        if (this.me) {
+          if (req.username) this.me.username = req.username
+          if (req.full_name) this.me.full_name = req.full_name
+          if (req.bio) this.me.bio = req.bio
+          if (req.avatar_url) this.me.avatar_url = req.avatar_url
+          if (req.birth_date != undefined) this.me.birth_date = req.birth_date
+        }
+        return true
+      }
+      catch (error) {
+        this.error = { code: 500, error: error!.toString() }
+        return false
+      }
+      finally {
         this.isLoading = false
       }
     },

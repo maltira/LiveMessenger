@@ -8,5 +8,5 @@ export interface Settings {
   show_birth_date: "all" | "nobody"
 
   dark_mode: boolean
-  language: "ru-RU" | "en-US"
+  language: string
 }

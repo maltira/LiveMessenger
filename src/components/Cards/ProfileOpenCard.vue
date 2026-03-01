@@ -14,7 +14,7 @@ import { useChatStore } from '@/stores/chats.store.ts'
 // ? STORE
 const { infoNotification } = useNotification()
 const profileStore = useProfileStore()
-const { me, selectedProfile: profile } = storeToRefs(profileStore)
+const { me, selectedProfile: profile, isChangeProfileOpen } = storeToRefs(profileStore)
 const authStore = useAuthStore()
 const { Logout } = authStore
 const blockStore = useBlockStore()
@@ -98,6 +98,12 @@ const createChat = async () => {
     }
   } else infoNotification("🚫 Ошибка создания чата: пользователь не выбран")
 }
+const goToChangeProfile = () => {
+  handleClose()
+  setTimeout(() => {
+    isChangeProfileOpen.value = true
+  }, 100)
+}
 
 onMounted(async () => {
   if (profile.value && profile.value.id) {
@@ -129,7 +135,7 @@ onUnmounted(() => {
     <div class="icon-btn" @click="handleClose">
       <img src="/icons/arrow.svg" alt="back" />
     </div>
-    <div class="icon-btn" v-if="me!.id === profile!.id">
+    <div class="icon-btn" v-if="me!.id === profile!.id" @click="goToChangeProfile">
       <img src="/icons/settings.svg" alt="settings" />
     </div>
   </div>
