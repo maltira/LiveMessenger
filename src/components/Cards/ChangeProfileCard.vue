@@ -10,7 +10,7 @@ import Spinner from '@/components/UI/Spinner.vue'
 
 const { infoNotification } = useNotification()
 const profileStore = useProfileStore()
-const { me, isChangeProfileOpen, error, isLoading } = storeToRefs(profileStore)
+const { me, isChangeProfileOpen, error, isLoading, selectedProfile } = storeToRefs(profileStore)
 
 const changeProfileContent = ref<HTMLElement | null>(null)
 const fullName = ref<string>('')
@@ -27,6 +27,7 @@ const handleClose = () => {
 
   setTimeout(() => {
     isChangeProfileOpen.value = false
+    selectedProfile.value = me.value
   }, 100)
 }
 const canSave = computed(() => {
@@ -52,7 +53,7 @@ const goToSave = async () => {
     if (error.value) {
       infoNotification(error.value.error)
     } else {
-      infoNotification("Изменения сохранены")
+      infoNotification("Изменения успешно сохранены")
     }
   }
 }
@@ -162,7 +163,6 @@ onMounted(() => {
     @include gray-icon-btn;
   }
 }
-
 .form-content {
   display: flex;
   flex-direction: column;
@@ -172,6 +172,9 @@ onMounted(() => {
   height: 100%;
 
   padding: 0 24px;
+
+  opacity: 0;
+  transform: scale(0.97);
 
   & > .profile-info {
     display: flex;

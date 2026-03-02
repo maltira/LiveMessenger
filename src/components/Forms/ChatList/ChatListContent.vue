@@ -29,6 +29,9 @@ const { chatsList } = storeToRefs(chatStore)
 // ? REF
 const isProfileModalOpen = ref(false)
 const searchElement = ref<HTMLElement | null>(null)
+const chatDataElement = ref<HTMLElement | null>(null)
+const isFetchingStatus = ref(false)
+const isFetchingBlock = ref(false)
 
 // ? FUNCTIONS
 const fetchProfiles = async (value: string) => {
@@ -41,14 +44,23 @@ const fetchProfiles = async (value: string) => {
 const isAddHide = computed(() => {
   return search.value || (searchElement.value && document.activeElement === searchElement.value)
 })
-const isFetchingStatus = ref(false)
-const isFetchingBlock = ref(false)
-
 const isLoading = computed(() => {
   return isSearching.value || isFetchingStatus.value || isFetchingBlock.value
 })
 
 watch(search, (value) => {
+  if (value) {
+    chatDataElement.value!.style.opacity = "0"
+    chatDataElement.value!.style.transform = "scale(0.97)"
+    chatDataElement.value!.style.display = 'none'
+  } else {
+    chatDataElement.value!.style.display = 'flex'
+    setTimeout(() => {
+      chatDataElement.value!.style.opacity = "1"
+      chatDataElement.value!.style.transform = "scale(1)"
+    }, 1)
+  }
+
   if (value.length < 4) {
     findingProfiles.value = []
   } else {
@@ -65,11 +77,17 @@ watch(search, (value) => {
       isFetchingStatus.value = false
       isFetchingBlock.value = false
     }, 300)
-
   }
 })
 onMounted(async() => {
   searchElement.value = document.getElementById('search-input')
+
+  setTimeout(() => {
+    chatDataElement.value = document.getElementById("chat-data-id")
+    chatDataElement.value!.style.opacity = "1"
+    chatDataElement.value!.style.transform = "scale(1)"
+  }, 1)
+
 })
 </script>
 
@@ -97,7 +115,7 @@ onMounted(async() => {
     <p v-else class="empty-data">Ничего не найдено</p>
   </div>
 
-  <div v-else class="chat-data">
+  <div id="chat-data-id" class="chat-data">
     <div v-if="chatsList.length > 0" class="my-chats">
       <ChatItemCard v-for="c in chatsList" :chat="c"/>
     </div>
@@ -108,6 +126,12 @@ onMounted(async() => {
 </template>
 
 <style scoped lang="scss">
+#chat-data-id {
+  opacity: 0;
+  transform: scale(0.97);
+  transform-origin: center top;
+}
+
 .sidebar-header {
   display: flex;
   align-items: center;

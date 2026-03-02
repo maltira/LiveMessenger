@@ -51,6 +51,13 @@ const computeStatus = computed(() => {
   forceUpdate.value // forceUpdate будет заставлять пересчитать время
   return 'был(а) ' + timeAgo(userLastSeen.value(profile.value!.id)!)
 })
+const showSkeleton = computed(() => {
+  return !profile ||
+    profile.value && me.value && profile.value.id !== me.value.id && (
+      blockedMeBy.value[profile.value.id] === undefined ||
+      onlineProfiles.value[profile.value.id] === undefined
+    )
+})
 
 // ? FUNCTIONS
 const goToLogout = async () => {
@@ -74,7 +81,7 @@ function copyClipboard(text: string) {
 }
 const handleClose = () => {
   if (aProfile.value) {
-    aProfile.value.style.margin = "0 5px";
+    aProfile.value.style.transform = "scale(0.97)";
     aProfile.value.style.opacity = "0";
   }
   setTimeout(() => {
@@ -107,13 +114,15 @@ const goToChangeProfile = () => {
 
 onMounted(async () => {
   if (profile.value && profile.value.id) {
-    await CheckIfBlockedMe(profile.value.id)
-    await fetchProfileOnline(profile.value.id)
+    if (me.value!.id !== profile.value!.id) {
+      await CheckIfBlockedMe(profile.value.id)
+      await fetchProfileOnline(profile.value.id)
+    }
 
     setTimeout(() => {
       aProfile.value = document.getElementById("shrink-animation-profile")
       if (aProfile.value) {
-        aProfile.value.style.margin = "0";
+        aProfile.value.style.transform = "scale(1)";
         aProfile.value.style.opacity = "1";
       }
     }, 1)
@@ -140,9 +149,7 @@ onUnmounted(() => {
     </div>
   </div>
   <div
-    v-if="
-      !profile || blockedMeBy[profile.id] === undefined || onlineProfiles[profile.id] === undefined
-    "
+    v-if="showSkeleton"
     class="form-content skeleton"
   >
     <div class="profile-info">
@@ -161,7 +168,7 @@ onUnmounted(() => {
     </div>
   </div>
   <div id="shrink-animation-profile" v-else class="form-content">
-    <div class="profile-info">
+    <div class="profile-info" v-if="profile">
       <div class="profile-info_header">
         <img
           v-if="isBlockedMeBy(profile.id)"
@@ -229,7 +236,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 #shrink-animation-profile{
   opacity: 0;
-  margin: 0 5px;
+  transform: scale(0.97);
 }
 .form-header {
   display: flex;
