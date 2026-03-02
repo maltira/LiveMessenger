@@ -5,9 +5,12 @@ import { computed, onMounted, ref } from 'vue'
 import type { UpdateProfileRequest } from '@/types/profile/dto/profile.dto.ts'
 import { VueDatePicker } from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
+import { useNotification } from '@/composables/useNotifications.ts'
+import Spinner from '@/components/UI/Spinner.vue'
 
+const { infoNotification } = useNotification()
 const profileStore = useProfileStore()
-const { me, isChangeProfileOpen } = storeToRefs(profileStore)
+const { me, isChangeProfileOpen, error, isLoading } = storeToRefs(profileStore)
 
 const changeProfileContent = ref<HTMLElement | null>(null)
 const fullName = ref<string>('')
@@ -34,15 +37,23 @@ const canSave = computed(() => {
     me.value.birth_date !== birthDate.value)
 })
 const goToSave = async () => {
-  if (canSave.value) {
+  if (canSave.value && me.value) {
     const req: UpdateProfileRequest = {
-      full_name: fullName.value || undefined,
-      username: username.value || undefined,
-      bio: bio.value || undefined,
-      birth_date: birthDate.value,
-      birth_date_is_set: birthDate.value !== me.value!.birth_date,
+      birth_date_is_set: me.value.birth_date !== birthDate.value
     }
-    console.log(req)
+
+    if (fullName.value !== me.value.full_name) req.full_name = fullName.value
+    if (username.value !== me.value.username) req.username = username.value
+    if (bio.value !== me.value.bio) req.bio = bio.value
+    if (birthDate.value !== me.value.birth_date) req.birth_date = birthDate.value
+
+    await profileStore.UpdateProfile(req)
+
+    if (error.value) {
+      infoNotification(error.value.error)
+    } else {
+      infoNotification("Изменения сохранены")
+    }
   }
 }
 
@@ -92,6 +103,7 @@ onMounted(() => {
             type="text"
             placeholder="Укажите имя"
             :class="{ active: fullName }"
+            maxlength="100"
           />
         </div>
         <div class="input-element">
@@ -103,6 +115,7 @@ onMounted(() => {
               type="text"
               placeholder="Укажите имя пользователя"
               :class="{ active: username }"
+              maxlength="50"
             />
           </div>
           <p class="footer-info">
@@ -110,11 +123,11 @@ onMounted(() => {
           </p>
         </div>
         <div class="input-element">
-          <p class="input-info">О себе (необязательно)</p>
-          <input v-model="bio" type="text" placeholder="Ваша биография" :class="{ active: bio }" />
+          <p class="input-info">О себе</p>
+          <input v-model="bio" maxlength="500" type="text" placeholder="Ваша биография" :class="{ active: bio }" />
         </div>
         <div class="input-element date-input">
-          <p class="input-info">Дата рождения (необязательно)</p>
+          <p class="input-info">Дата рождения</p>
           <VueDatePicker
             v-model="birthDate"
             placeholder="Дата рождения"
@@ -126,7 +139,14 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="gray-fill-btn" :class="{disabled: !canSave}" @click="goToSave">Сохранить изменения</div>
+    <div
+      class="gray-fill-btn"
+      :class="{disabled: !canSave || isLoading}"
+      @click="goToSave"
+    >
+      Сохранить изменения
+      <Spinner v-if="isLoading" size="small"/>
+    </div>
   </div>
 </template>
 
