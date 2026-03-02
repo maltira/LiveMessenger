@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import router from '@/router'
 </script>
 
 <template>
@@ -7,7 +8,7 @@
       <h4>Упсс... не найдено</h4>
       <p>К сожалению, эта страница не найдена</p>
     </div>
-    <button>На главную</button>
+    <button @click="router.push('/chat')">На главную</button>
   </div>
 </template>
 

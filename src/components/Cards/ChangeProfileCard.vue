@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import type { UpdateProfileRequest } from '@/types/profile/dto/profile.dto.ts'
+import { VueDatePicker } from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css'
 
 const profileStore = useProfileStore()
 const { me, isChangeProfileOpen } = storeToRefs(profileStore)
@@ -23,16 +26,35 @@ const handleClose = () => {
     isChangeProfileOpen.value = false
   }, 100)
 }
+const canSave = computed(() => {
+  return me.value &&
+    (me.value.full_name !== fullName.value && fullName.value.length > 3 ||
+    me.value.username !== username.value && username.value.length > 3 ||
+    me.value.bio !== bio.value ||
+    me.value.birth_date !== birthDate.value)
+})
+const goToSave = async () => {
+  if (canSave.value) {
+    const req: UpdateProfileRequest = {
+      full_name: fullName.value || undefined,
+      username: username.value || undefined,
+      bio: bio.value || undefined,
+      birth_date: birthDate.value,
+      birth_date_is_set: birthDate.value !== me.value!.birth_date,
+    }
+    console.log(req)
+  }
+}
 
 onMounted(() => {
   if (me.value) {
     fullName.value = me.value.full_name
     username.value = me.value.username
     bio.value = me.value.bio
-    birthDate.value = me.value.birth_date
+    birthDate.value = me.value.birth_date || null
   }
   setTimeout(() => {
-    changeProfileContent.value = document.getElementById("change-profile-content")
+    changeProfileContent.value = document.getElementById('change-profile-content')
     if (changeProfileContent.value) {
       changeProfileContent.value.style.transform = 'scale(1)'
       changeProfileContent.value.style.opacity = '1'
@@ -53,7 +75,7 @@ onMounted(() => {
       <div class="profile-info_header">
         <div class="avatar-container">
           <div class="set-avatar">
-            <img src="/icons/add-photo.svg" alt="add">
+            <img src="/icons/add-photo.svg" alt="add" />
           </div>
           <img class="img-avatar" :src="`/img/avatars/${me.avatar_url}`" alt="avatar" />
         </div>
@@ -65,15 +87,27 @@ onMounted(() => {
       <div class="profile-info_body">
         <div class="input-element">
           <p class="input-info">Ваше имя</p>
-          <input v-model="fullName" type="text" placeholder="Укажите имя" :class="{ active: fullName }" />
+          <input
+            v-model="fullName"
+            type="text"
+            placeholder="Укажите имя"
+            :class="{ active: fullName }"
+          />
         </div>
         <div class="input-element">
           <p class="input-info">Имя пользователя</p>
           <div class="username-input">
             <p class="dog">@</p>
-            <input v-model="username" type="text" placeholder="Укажите имя пользователя" :class="{ active: username }" />
+            <input
+              v-model="username"
+              type="text"
+              placeholder="Укажите имя пользователя"
+              :class="{ active: username }"
+            />
           </div>
-          <p class="footer-info">По имени пользователя другие люди смогут находить вас и связываться с вами</p>
+          <p class="footer-info">
+            По имени пользователя другие люди смогут находить вас и связываться с вами
+          </p>
         </div>
         <div class="input-element">
           <p class="input-info">О себе (необязательно)</p>
@@ -81,11 +115,18 @@ onMounted(() => {
         </div>
         <div class="input-element date-input">
           <p class="input-info">Дата рождения (необязательно)</p>
-          <input v-model="birthDate" type="date" placeholder="Дата рождения" :class="{ active: birthDate }" />
+          <VueDatePicker
+            v-model="birthDate"
+            placeholder="Дата рождения"
+            :formats="{ input: 'yyyy-MM-dd' }"
+            :maxDate="new Date()"
+            :time-config="{ enableTimePicker: false }"
+            auto-apply
+          />
         </div>
       </div>
     </div>
-    <div class="gray-fill-btn">Сохранить изменения</div>
+    <div class="gray-fill-btn" :class="{disabled: !canSave}" @click="goToSave">Сохранить изменения</div>
   </div>
 </template>
 
@@ -150,7 +191,6 @@ onMounted(() => {
             opacity: 1;
           }
         }
-        
       }
 
       & > .profile-header_title {
@@ -199,12 +239,6 @@ onMounted(() => {
         & input {
           @include st-inline-input;
           width: 100%;
-        }
-
-        &.date-input{
-          & > input {
-
-          }
         }
       }
     }
