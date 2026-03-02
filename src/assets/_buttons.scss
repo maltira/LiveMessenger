@@ -99,6 +99,11 @@
     width: 24px;
     height: 24px;
     opacity: 0.6;
+    pointer-events: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 
   &:hover {

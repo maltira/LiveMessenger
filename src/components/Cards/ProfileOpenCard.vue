@@ -177,7 +177,7 @@ onUnmounted(() => {
           src="/icons/block-outline.svg"
           alt="block.svg"
         />
-        <img v-else class="img-avatar" :src="`/img/avatars/${profile.avatar_url}`" alt="avatar" />
+        <img v-else class="img-avatar" :src="profile.avatar_url" alt="avatar" />
 
         <div class="profile-header_title">
           <h5>{{ profile.full_name }}</h5>
@@ -293,6 +293,7 @@ onUnmounted(() => {
   & > .img-avatar {
     width: 72px !important;
     height: 72px !important;
+    border-radius: 100%;
   }
 
   & > .profile-header_title {

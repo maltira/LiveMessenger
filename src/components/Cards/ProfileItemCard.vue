@@ -32,7 +32,7 @@ onMounted(() => {
       <div v-if="isBlockedMeBy(profile.id)" class="img-avatar blocked">
         {{ profile.full_name[0] ? profile.full_name[0].toUpperCase() : "Н" }}
       </div>
-      <img v-else @load="avatarLoading = false" class="img-avatar" :src="`/img/avatars/${profile.avatar_url}`" alt="avatar" />
+      <img v-else @load="avatarLoading = false" class="img-avatar" :src="profile.avatar_url" alt="avatar" />
 
       <div class="online-status" :class="{active: isUserOnline(profile.id) && !isBlockedMeBy(profile.id)}"></div>
     </div>
@@ -67,7 +67,7 @@ onMounted(() => {
     max-width: 44px;
     width: 44px !important;
     height: 44px !important;
-    border-radius: 99px;
+    border-radius: 100%;
 
     &.blocked {
       @include h5-text;

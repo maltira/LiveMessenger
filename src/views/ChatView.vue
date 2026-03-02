@@ -53,9 +53,9 @@ const hasMoreMessages = ref(true)
 const chatAvatar = computed(() => {
   if (activeChat.value) {
     if (activeChat.value.type === 'private' && profile.value) {
-      return '/img/avatars/' + profile.value.avatar_url
+      return profile.value.avatar_url
     }
-    return '/img/avatars/' + activeChat.value.avatar_url || '/img/avatars/avatar-violet.png'
+    return activeChat.value.avatar_url || '/img/avatars/avatar-violet.png'
   }
   return '/img/avatars/avatar-violet.png'
 })
@@ -423,7 +423,7 @@ onUnmounted(() => {
         max-width: 44px;
         width: 44px !important;
         height: 44px !important;
-        border-radius: 99px;
+        border-radius: 100%;
 
         &.blocked {
           @include h5-text;

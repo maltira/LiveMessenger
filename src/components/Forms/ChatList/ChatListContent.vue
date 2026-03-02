@@ -84,8 +84,10 @@ onMounted(async() => {
 
   setTimeout(() => {
     chatDataElement.value = document.getElementById("chat-data-id")
-    chatDataElement.value!.style.opacity = "1"
-    chatDataElement.value!.style.transform = "scale(1)"
+    if (chatDataElement.value) {
+      chatDataElement.value.style.opacity = "1"
+      chatDataElement.value.style.transform = "scale(1)"
+    }
   }, 1)
 
 })

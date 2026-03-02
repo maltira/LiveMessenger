@@ -50,7 +50,7 @@ const isOnline = computed(() => {
 })
 const chatAvatar = computed(() => {
   if (props.chat.type === 'private' && profile.value) {
-    return "/img/avatars/" + profile.value.avatar_url
+    return profile.value.avatar_url
   }
   return props.chat.avatar_url || "/img/avatars/avatar-violet.png"
 })
@@ -133,7 +133,12 @@ onMounted(async () => {
     max-width: 44px;
     width: 44px !important;
     height: 44px !important;
-    border-radius: 99px;
+    border-radius: 100%;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 
     &.blocked {
       @include h5-text;

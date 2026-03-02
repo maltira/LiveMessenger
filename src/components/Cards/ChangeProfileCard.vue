@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useProfileStore } from '@/stores/profile.store.ts'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { UpdateProfileRequest } from '@/types/profile/dto/profile.dto.ts'
 import { VueDatePicker } from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -12,11 +12,24 @@ const { infoNotification } = useNotification()
 const profileStore = useProfileStore()
 const { me, isChangeProfileOpen, error, isLoading, selectedProfile } = storeToRefs(profileStore)
 
+// ? REF
 const changeProfileContent = ref<HTMLElement | null>(null)
 const fullName = ref<string>('')
 const username = ref<string>('')
 const bio = ref<string>('')
 const birthDate = ref<Date | null>(null)
+
+const avatarFile = ref<File | null>(null)
+const avatarPreview = ref<string | null>(null)
+const isUploadingAvatar = ref<boolean>(false)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
+type ImgBBResponse = {
+  data: {
+    id: string
+    url: string
+  }
+}
 
 // ? FUNCTIONS
 const handleClose = () => {
@@ -30,15 +43,40 @@ const handleClose = () => {
     selectedProfile.value = me.value
   }, 100)
 }
-const canSave = computed(() => {
-  return me.value &&
-    (me.value.full_name !== fullName.value && fullName.value.length > 3 ||
-    me.value.username !== username.value && username.value.length > 3 ||
-    me.value.bio !== bio.value ||
-    me.value.birth_date !== birthDate.value)
-})
+const handleAvatarFile = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  // Валидация
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    infoNotification('Допустимые форматы: JPG, JPEG и PNG')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    infoNotification(`Файл слишком большой. Максимальный размер: 5 MB`)
+    return
+  }
+
+  avatarPreview.value = URL.createObjectURL(file)
+  avatarFile.value = file
+}
 const goToSave = async () => {
   if (canSave.value && me.value) {
+    // Сначала загружаем аватар на сервер
+    isUploadingAvatar.value = true
+    let res: ImgBBResponse | null = null
+    if (avatarFile.value && avatarPreview.value) {
+      const formData = new FormData()
+      formData.append('image', avatarFile.value)
+      formData.append('key', '493edcd16bddbcf5ec0a7a6983c398bd')
+
+      const r = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
+      res = await r.json()
+    }
+    isUploadingAvatar.value = false
+
+    // Обновляем пользователя
     const req: UpdateProfileRequest = {
       birth_date_is_set: me.value.birth_date !== birthDate.value
     }
@@ -47,6 +85,9 @@ const goToSave = async () => {
     if (username.value !== me.value.username) req.username = username.value
     if (bio.value !== me.value.bio) req.bio = bio.value
     if (birthDate.value !== me.value.birth_date) req.birth_date = birthDate.value
+    if (avatarFile.value && avatarPreview.value && res) {
+      req.avatar_url = res.data.url
+    }
 
     await profileStore.UpdateProfile(req)
 
@@ -57,6 +98,31 @@ const goToSave = async () => {
     }
   }
 }
+const triggerFileInput = () => {
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
+}
+const removeFile = () => {
+  if (avatarPreview.value) {
+    URL.revokeObjectURL(avatarPreview.value!)
+    avatarPreview.value = null
+  }
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+  avatarFile.value = null
+}
+
+// ? COMPUTED
+const canSave = computed(() => {
+  return me.value &&
+    (me.value.full_name !== fullName.value && fullName.value.length > 3 ||
+    me.value.username !== username.value && username.value.length > 3 ||
+    me.value.bio !== bio.value ||
+    me.value.birth_date !== birthDate.value ||
+    avatarFile.value && me.value.avatar_url !== avatarFile.value?.name)
+})
 
 onMounted(() => {
   if (me.value) {
@@ -73,6 +139,9 @@ onMounted(() => {
     }
   }, 1)
 })
+onUnmounted(() => {
+  if (avatarPreview.value) URL.revokeObjectURL(avatarPreview.value)
+})
 </script>
 
 <template>
@@ -86,10 +155,18 @@ onMounted(() => {
     <div class="profile-info">
       <div class="profile-info_header">
         <div class="avatar-container">
-          <div class="set-avatar">
-            <img src="/icons/add-photo.svg" alt="add" />
+          <div class="set-avatar" @click="avatarPreview ? removeFile() : triggerFileInput()" :class="{disabled: isUploadingAvatar}">
+            <img :src="avatarPreview ? '/icons/delete-outline-black.svg' : `/icons/add-photo.svg`" alt="add" />
+            <Spinner v-if="isUploadingAvatar" size="small"/>
           </div>
-          <img class="img-avatar" :src="`/img/avatars/${me.avatar_url}`" alt="avatar" />
+          <img class="img-avatar" :src="avatarPreview || me.avatar_url" alt="avatar" />
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/jpeg,image/jpg,image/png"
+            style="display: none"
+            @change="handleAvatarFile"
+          >
         </div>
         <div class="profile-header_title">
           <h5>{{ me.full_name }}</h5>
@@ -142,11 +219,11 @@ onMounted(() => {
     </div>
     <div
       class="gray-fill-btn"
-      :class="{disabled: !canSave || isLoading}"
+      :class="{disabled: !canSave || isLoading || isUploadingAvatar}"
       @click="goToSave"
     >
       Сохранить изменения
-      <Spinner v-if="isLoading" size="small"/>
+      <Spinner v-if="isLoading || isUploadingAvatar" size="small"/>
     </div>
   </div>
 </template>
@@ -191,6 +268,7 @@ onMounted(() => {
         & > .img-avatar {
           width: 72px !important;
           height: 72px !important;
+          border-radius: 100%;
         }
         & > .set-avatar {
           position: absolute;
@@ -212,6 +290,13 @@ onMounted(() => {
 
           &:hover {
             opacity: 1;
+          }
+          &.disabled {
+            opacity: 1;
+            pointer-events: none;
+            & > img {
+              display: none;
+            }
           }
         }
       }

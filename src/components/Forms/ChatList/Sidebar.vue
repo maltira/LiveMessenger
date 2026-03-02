@@ -65,7 +65,7 @@ const {
   display: flex;
   flex-direction: column;
 
-  width: 400px;
+  width: 462px;
   flex-shrink: 0;
   height: 100%;
 

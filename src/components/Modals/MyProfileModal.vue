@@ -81,7 +81,7 @@ onUnmounted(() => {
 <template>
   <div class="my-profile-modal" id="my-profile-modal">
     <div class="modal-header">
-      <img :src="`/img/avatars/${me!.avatar_url}`" alt="avatar" />
+      <img :src="me!.avatar_url" alt="avatar" />
       <div class="modal-header_user">
         <p class="full_name">{{ me!.full_name }}</p>
         <p class="user_name">@{{ me!.username }}</p>
@@ -157,6 +157,7 @@ onUnmounted(() => {
   & > img {
     width: 42px;
     height: 42px;
+    border-radius: 100%;
   }
   & > .modal-header_user {
     display: flex;
