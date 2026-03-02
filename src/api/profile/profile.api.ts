@@ -1,7 +1,7 @@
 import type { Profile } from '@/types/profile/profile.model.ts'
 import type { ErrorResponse } from '@/types/error.dto.ts'
 import { apiFetch } from '@/api/fetch.ts'
-import type { OnlineStatusResponse } from '@/types/profile/dto/profile.dto.ts'
+import type { OnlineStatusResponse, UpdateProfileRequest } from '@/types/profile/dto/profile.dto.ts'
 
 
 class ProfileService {
@@ -15,6 +15,14 @@ class ProfileService {
   async FetchProfile(id: string): Promise<Profile | ErrorResponse> {
     const response = await apiFetch(`/user/profile/${id}`, {
       method: 'GET',
+    })
+    return response.json()
+  }
+
+  async UpdateProfile(req: UpdateProfileRequest): Promise<boolean | ErrorResponse> {
+    const response = await apiFetch("/user/profile", {
+      method: 'PUT',
+      body: JSON.stringify(req)
     })
     return response.json()
   }

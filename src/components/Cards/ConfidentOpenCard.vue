@@ -28,7 +28,7 @@ const handleClose = () => {
 const updateSettings = async (status?: boolean, birth_date?: "all" | "nobody") => {
   const req: SettingsUpdateReq = {
     show_online_status: status,
-    show_birth_date: birth_date
+    show_birth_date: birth_date,
   }
   const updated = await settingsStore.UpdateSettings(req)
 

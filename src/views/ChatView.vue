@@ -43,6 +43,11 @@ const forceUpdate = ref(0)
 const aChat = ref<HTMLElement | null>(null)
 let intervalId: number | null = null
 const editMode = ref<Message | null>(null)
+const messagesContainer = ref<HTMLElement | null>(null)
+const offset = ref(0)
+const limit = 50
+const isFetchingMore = ref(false)
+const hasMoreMessages = ref(true)
 
 // ? FUNCTIONS
 const chatAvatar = computed(() => {
@@ -132,6 +137,32 @@ const fetchProfileName = computed(() => {
   }
   return 'Неизвестно'
 })
+const loadMoreMessages = async () => {
+  if (!activeChat.value || !hasMoreMessages.value || isFetchingMore.value) return
+  if (!messagesContainer.value) return
+
+  isFetchingMore.value = true
+
+  await chatStore.FetchMessages(activeChatId.value, limit, offset.value + limit)
+
+  offset.value += limit
+
+  if (activeChat.value.messages.length < offset.value + limit) {
+    hasMoreMessages.value = false
+  }
+
+  isFetchingMore.value = false
+}
+const handleScroll = () => {
+  if (!messagesContainer.value || !hasMoreMessages.value || isFetchingMore.value) return
+
+  const scrolledUpPx = -messagesContainer.value.scrollTop;
+  const maxScrolledUpPx = messagesContainer.value.scrollHeight - messagesContainer.value.clientHeight;
+
+  if (scrolledUpPx >= maxScrolledUpPx - 1) {
+    loadMoreMessages()
+  }
+}
 
 const goToEdit = (msg: Message) => {
   editMode.value = msg
@@ -190,20 +221,31 @@ watch(activeChatId, async () => {
             aChat.value.style.padding = '12px 24px 24px 24px'
             aChat.value.style.opacity = '1'
           }
+
+          messagesContainer.value = document.getElementById("messagesContainer")
+          if (!messagesContainer.value) return
+          messagesContainer.value.addEventListener("scroll", handleScroll)
         }, 1)
       }
     }
   }
+
+  offset.value = 0
+  hasMoreMessages.value = true
+  isFetchingMore.value = false
 })
 onMounted(async () => {
   intervalId = setInterval(() => {
     forceUpdate.value++
-  }, 60000) // каждые 60с
+  }, 60000)
 })
 onUnmounted(() => {
   if (intervalId) {
     clearInterval(intervalId)
   }
+
+  if (!messagesContainer.value) return
+  messagesContainer.value.removeEventListener("scroll", handleScroll)
 })
 </script>
 
@@ -233,7 +275,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="activeChat.messages.length > 0" class="messages-list">
+    <div id="messagesContainer" v-if="activeChat.messages.length > 0" class="messages-list">
       <div
         v-for="m in activeChat.messages"
         class="message-item"
@@ -270,6 +312,9 @@ onUnmounted(() => {
         </p>
 
         <p class="message-time" v-if="m.user_id !== me!.id">{{ formatTimeOnly(m.created_at) }}</p>
+      </div>
+      <div v-if="isFetchingMore" class="loading-more">
+        Загрузка предыдущих сообщений...
       </div>
     </div>
     <div v-else class="empty-messages">
@@ -462,7 +507,7 @@ onUnmounted(() => {
 .messages-list {
   display: flex;
   flex-direction: column-reverse;
-  gap: 12px;
+  gap: 8px;
   flex-grow: 1;
 
   width: 100%;
@@ -479,6 +524,7 @@ onUnmounted(() => {
 
     width: 100%;
     gap: 6px;
+    margin: 2px 0;
 
     background: transparent;
 
@@ -679,5 +725,12 @@ onUnmounted(() => {
   &.me {
     transform: translateX(-5px);
   }
+}
+
+.loading-more {
+  @include tag-text;
+  padding: 16px;
+  opacity: 0.6;
+  text-align: center;
 }
 </style>
